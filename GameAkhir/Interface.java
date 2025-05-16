@@ -1,4 +1,4 @@
 package GameAkhir;
 public interface Interface {
-    void tampilan();
+    String tampilan();
 }

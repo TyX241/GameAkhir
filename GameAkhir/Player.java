@@ -46,11 +46,9 @@ public class Player implements Interface{
     }
     
     @Override
-    public void tampilan(){
-        System.out.println("Nama: "+nama);
-        System.out.println("saldo: "+saldo);
-        System.out.println("Kendaraan: "+kendaraan);
-        System.out.println("perks: "+perks);
-        System.out.println("items: "+items);
+    public String tampilan(){
+        return String.format(
+            "Nama: %s%nSaldo: %.0f%nKendaraan: %s%nPerks: %s%nItems: %s",
+            nama, saldo, kendaraan, perks, items);
     }
 }
