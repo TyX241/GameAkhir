@@ -2,18 +2,32 @@ package GameAkhir;
 import java.util.*;
 public class TokoItem {
     private List<Item> daftarItem;
+    private List<Item> itemDefault = Arrays.asList(
+        new Item("Buku", "Intelegent + 100", 10000, 1, 1),
+        new Item("Kunci", "Kendaraan + 1", 10000, 2, 2),
+        new Item("Obat", "Kesehatan + 100", 10000, 3, 1)
+    );
     private Player pemain;
     private Rumah rumah;
+    private Kendaraan kendaraan;
 
-    public TokoItem(List<Item> daftarItem, Player pemain, Rumah rumah) {
+    public TokoItem(List<Item> daftarItem, Player pemain, Rumah rumah, Kendaraan kendaraan) {
         this.daftarItem = daftarItem;
         this.pemain = pemain;
         this.rumah = rumah;
-        daftarItem.add(new Item("Pelaris", "", 10000));
+        this.kendaraan = kendaraan;
     }
 
-    public void beliItem() {
+    public void beliItem(Kendaraan kendaraan) {
         Scanner in = new Scanner(System.in);
+        List<Item> daftarItem = new ArrayList<>();
+        
+        for(Item item : itemDefault){
+            if(item.getPerluLevel()<= kendaraan.getlevel()){
+                daftarItem.add(item);
+            }
+        }
+
         System.out.println("Daftar Item yang tersedia:");
         for (int i = 0; i < daftarItem.size(); i++) {
             Item item = daftarItem.get(i);

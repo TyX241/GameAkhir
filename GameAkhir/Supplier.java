@@ -1,13 +1,19 @@
 package GameAkhir;
+import javax.swing.*;
+
+import java.awt.GridLayout;
 import java.util.*;
+
 public class Supplier {
     private List<Barang> daftarBarang;
     private Rumah rumah;
     private Player pemain;
-    public Supplier(List<Barang> daftarBarang, Rumah rumah, Player pemain) {
+    private GamePanel game;
+    public Supplier(List<Barang> daftarBarang, Rumah rumah, Player pemain, GamePanel game) {
         this.daftarBarang = daftarBarang;
         this.rumah = rumah;
         this.pemain = pemain;
+        this.game = game;
         daftarBarang.add(new Barang("Pensil",1000, 1200));
         daftarBarang.add(new Barang("Pena",2000, 2200));
         daftarBarang.add(new Barang("Buku",3000, 3200));
@@ -40,6 +46,32 @@ public class Supplier {
             
         } else {
             System.out.println("Pilihan tidak valid.");
+        }
+    }
+      public void processPurchase(int index, int jumlah) {
+        Barang barang = daftarBarang.get(index);
+        double total = barang.getHargaBeli() * jumlah;
+        if (jumlah <= 0) {
+            return;
+        }
+        if (total > pemain.getSaldo()) {
+            // Gunakan game.window sebagai parent untuk dialog
+            JOptionPane.showMessageDialog(
+                game.window,
+                "Saldo tidak cukup untuk " + barang.getNama(),
+                "Error",
+                JOptionPane.ERROR_MESSAGE
+            );
+        } else {
+            pemain.setSaldo(pemain.getSaldo() - total);
+            rumah.addBarang(barang, jumlah);
+            JOptionPane.showMessageDialog(
+                game.window,
+                "Berhasil beli " + jumlah + " x " + barang.getNama() +
+                "\nSisa Saldo: Rp" + pemain.getSaldo(),
+                "Sukses",
+                JOptionPane.INFORMATION_MESSAGE
+            );
         }
     }
 }

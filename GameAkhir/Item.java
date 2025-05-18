@@ -5,6 +5,8 @@ public class Item {
     private String efek;
     private double harga;
     private int durasi;
+    private int jumlahl;
+    private int perluLevel;
 
     public Item(String nama, String efek, double harga, int durasi) {
         this.nama = nama;
@@ -12,6 +14,15 @@ public class Item {
         this.harga = harga;
         this.durasi = durasi;
     }
+    public Item(String nama, String efek, double harga, int durasi, int perluLevel) {
+        this.nama = nama;
+        this.efek = efek;
+        this.harga = harga;
+        this.durasi = durasi;
+        this.perluLevel = perluLevel;
+    }
+
+
     public Item(String nama, String efek, double harga) {
         this.nama = nama;
         this.harga = harga;
@@ -19,6 +30,9 @@ public class Item {
 
     public String getNama() {
         return nama;
+    }
+    public int getJumlah() {
+        return jumlahl;
     }
 
     public void setNama(String nama) {
@@ -44,8 +58,16 @@ public class Item {
     public void setDurasi(int durasi) {
         this.durasi = durasi;
     }
+    public int getPerluLevel() {
+        return perluLevel;
+    }
 
     public void aktifkan(){
         
+    }
+    
+    @Override
+    public String toString() {
+        return nama + " - Efek: " + efek + "\n";
     }
 }
