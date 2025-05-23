@@ -11,7 +11,7 @@ public class Peta {
 
     public Peta() {
         lokasiList = Arrays.asList("Rumah", "Toko", "Pasar", "Sekolah", "Kantor");
-        posisiSekarang = 0; // mulai dari Rumah
+        posisiSekarang = 0; 
         rand = new Random();
     }
     public int getPosisiSekarang() {
@@ -37,22 +37,7 @@ public class Peta {
         if(indexTujuan == 0){
             return;
         }
-        // Cek kemungkinan bertemu pembeli (misal 80%)
-       if (rand.nextDouble() < 0.8) {
-        Pembeli pembeli;
-        int tipe = rand.nextInt(3);
-        if (tipe == 0) {
-            pembeli = new PembeliTajir();
-        } else if (tipe == 1) {
-            pembeli = new PembeliStandard();
-        } else {
-            pembeli = new PembeliMiskin();
-        }
-        System.out.println("Kamu bertemu dengan pembeli: " + pembeli.getClass().getSimpleName());
-            // Bisa tambahkan logika interaksi dengan pembeli di sini
-        } else {
-            System.out.println("Tidak ada pembeli di lokasi ini.");
-        }
+     
     }
 
     public void tampilkanLokasi() {
