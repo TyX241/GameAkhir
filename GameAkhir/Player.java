@@ -60,9 +60,14 @@ public class Player implements Interface{
             System.out.println(perk.getNama());
         }
     }
+    public void tambahSaldo(double jumlah) {
+        this.saldo += jumlah;
+    }
     
     public void kurangiSaldo(double jumlah) {
-        this.saldo -= jumlah;
+        if (saldo >= jumlah) {
+            this.saldo -= jumlah;
+        }
     }
     
     @Override
@@ -73,7 +78,7 @@ public class Player implements Interface{
         for (Perk p : perks) {
             daftarPerk += p.getNama() + ", ";
         }
-        daftarPerk = daftarPerk.substring(0, daftarPerk.length() - 2); // Hapus ", " terakhir
+        daftarPerk = daftarPerk.substring(0, daftarPerk.length() - 2); 
     }
 
     String daftarItem = "Tidak ada";
