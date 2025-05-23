@@ -141,17 +141,97 @@ public class GamePanel {
         window.repaint();
     }
 
-    private void showBuyBarangScreen() {
-        throw new UnsupportedOperationException("Not supported yet."); 
+private void showBuyBarangScreen() {
+    con.removeAll();
+
+    JLabel title = new JLabel("Toko Barang / Supplier");
+    title.setFont(fontJudul);
+    title.setForeground(Color.WHITE);
+    title.setBounds(220, 20, 600, 100);
+    con.add(title);
+
+    JPanel barangPanel = new JPanel();
+    barangPanel.setLayout(new BoxLayout(barangPanel, BoxLayout.Y_AXIS));
+    barangPanel.setBackground(Color.WHITE);
+
+    for (Barang barang : daftarBarang) {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.GRAY));
+        panel.setBackground(Color.WHITE);
+        panel.setPreferredSize(new Dimension(750, 90));
+
+        JPanel infoPanel = new JPanel(new GridLayout(2, 1));
+        infoPanel.setBackground(Color.WHITE);
+        infoPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        JLabel namaLabel = new JLabel(barang.getNama());
+        namaLabel.setFont(new Font("Arial", Font.BOLD, 18));
+
+        JLabel infoLabel = new JLabel("Harga: Rp" + barang.getHargaBeli());
+        infoLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+
+        infoPanel.add(namaLabel);
+        infoPanel.add(infoLabel);
+
+        JPanel actionPanel = new JPanel();
+        actionPanel.setBackground(Color.WHITE);
+
+        SpinnerModel model = new SpinnerNumberModel(1, 1, 99, 1);
+        JSpinner jumlahSpinner = new JSpinner(model);
+        jumlahSpinner.setPreferredSize(new Dimension(50, 30));
+        actionPanel.add(jumlahSpinner);
+
+        JButton beliBtn = new JButton("Beli");
+        beliBtn.setFont(fontNormal);
+        beliBtn.addActionListener(e -> {
+            int jumlah = (int) jumlahSpinner.getValue();
+            int total = (int) (barang.getHargaBeli() * jumlah);
+            if (pemain.getSaldo() >= total) {
+                pemain.kurangiSaldo(total);
+                rumah.addBarang(barang, jumlah);
+                JOptionPane.showMessageDialog(window, "Berhasil membeli " + jumlah + "x " + barang.getNama());
+                showBuyBarangScreen(); // refresh tampilan
+            } else {
+                JOptionPane.showMessageDialog(window, "Saldo tidak cukup!");
+            }
+        });
+
+        actionPanel.add(beliBtn);
+
+        panel.add(infoPanel, BorderLayout.CENTER);
+        panel.add(actionPanel, BorderLayout.EAST);
+        barangPanel.add(panel);
     }
+
+    JScrollPane scroll = new JScrollPane(barangPanel);
+    scroll.setBounds(100, 150, 800, 250);
+    con.add(scroll);
+
+    JButton kembali = new JButton("Kembali");
+    kembali.setFont(fontNormal);
+    kembali.setBounds(800, 420, 200, 60);
+    kembali.addActionListener(e -> kembali());
+    con.add(kembali);
+
+    JTextArea infoArea = new JTextArea(pemain.tampilan());
+    infoArea.setFont(fontNormal);
+    infoArea.setEditable(false);
+    infoArea.setBackground(Color.BLACK);
+    infoArea.setForeground(Color.WHITE);
+    infoArea.setLineWrap(true);
+    JScrollPane infoScroll = new JScrollPane(infoArea);
+    infoScroll.setBounds(50, 500, 950, 140);
+    con.add(infoScroll);
+
+    window.revalidate();
+    window.repaint();
+}
+
 
     private void tampilkanStok(Rumah rumah) {
         throw new UnsupportedOperationException("Not supported yet."); 
     }
 
-    private void showPilihLokasiScreen() {
-        throw new UnsupportedOperationException("Not supported yet."); 
-    }
 
     public class TitleScreenHandler implements ActionListener {
         public void actionPerformed(ActionEvent e) {
@@ -279,6 +359,77 @@ public class GamePanel {
         JTextArea infoArea = (JTextArea) ((JScrollPane) panelPemain.getComponent(0)).getViewport().getView();
         infoArea.setText(info);
     }
+    
+private void showPilihLokasiScreen() {
+    ArrayList<Barang> stokBarang = rumah.getStokBarangList();
+
+    if (stokBarang.isEmpty()) {
+        JOptionPane.showMessageDialog(window, "Stok kosong! Tidak bisa berjualan.");
+        return;
+    }
+
+    String[] pilihanBarang = stokBarang.stream()
+        .map(b -> b.getNama() + " (Stok: " + rumah.getJumlah(b) + ")")
+        .toArray(String[]::new);
+
+    int pilihan = JOptionPane.showOptionDialog(window,
+            "Pilih barang yang akan dijual:",
+            "Pilih Barang",
+            JOptionPane.DEFAULT_OPTION,
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            pilihanBarang,
+            pilihanBarang[0]);
+
+    if (pilihan == -1) return; // Batal pilih
+
+    Barang barangDipilih = stokBarang.get(pilihan);
+    int hargaAwal = (int) rumah.getHargaJual(barangDipilih);
+
+    String namaPembeli = JOptionPane.showInputDialog(window, "Masukkan nama pembeli:");
+    if (namaPembeli == null || namaPembeli.trim().isEmpty()) return;
+
+    Pembeli pembeli = generatePembeliAcak(namaPembeli);
+    int hargaTawaran = pembeli.tawarHarga(hargaAwal);
+
+    int hasil = JOptionPane.showConfirmDialog(window,
+        "Pembeli: " + pembeli.getNama() +
+        "\nBarang: " + barangDipilih.getNama() +
+        "\nHarga Awal: Rp" + hargaAwal +
+        "\nTawaran: Rp" + hargaTawaran +
+        "\n\nTerima tawaran dan jual barang ini?",
+        "Tawar-Menawar", JOptionPane.YES_NO_OPTION);
+
+    if (hasil == JOptionPane.YES_OPTION) {
+        if (rumah.getJumlah(barangDipilih) > 0) {
+            rumah.kurangiStok(barangDipilih, 1);
+            pemain.tambahSaldo(hargaTawaran);
+            JOptionPane.showMessageDialog(window, "Barang berhasil dijual!");
+        } else {
+            JOptionPane.showMessageDialog(window, "Stok barang habis! Tidak jadi jual.");
+        }
+    } else {
+        JOptionPane.showMessageDialog(window, "Transaksi dibatalkan.");
+    }
+
+    updatePlayerInfo();
+}
+
+
+
+private Pembeli generatePembeliAcak(String nama) {
+    double chance = Math.random();
+    if (chance < 0.1) {
+        return new PembeliTajir(nama);
+    } else if (chance < 0.6) {
+        return new PembeliStandard(nama);
+    } else {
+        return new PembeliMiskin(nama);
+    }
+}
+
+
 
 }
+
 
