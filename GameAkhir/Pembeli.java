@@ -1,18 +1,18 @@
 package GameAkhir;
 
 public abstract class Pembeli {
-    private String nama;
+    private final String nama;
 
-    public int tawarHarga(){
-        return 0;
-
+    public Pembeli(String nama) {
+        this.nama = nama;
     }
-    public boolean putuskanBeli(){
-        return false;
 
-    }
-    public String getNama(){
+    public abstract int tawarHarga(int hargaAwal);
+    public abstract boolean putuskanBeli();
+
+    public String getNama() {
         return nama;
-
     }
 }
+
+     
