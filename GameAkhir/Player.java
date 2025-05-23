@@ -61,6 +61,10 @@ public class Player implements Interface{
         }
     }
     
+    public void kurangiSaldo(double jumlah) {
+        this.saldo -= jumlah;
+    }
+    
     @Override
     public String tampilan() {
     String daftarPerk = "Tidak ada";
@@ -85,5 +89,7 @@ public class Player implements Interface{
         "Nama: %s%nSaldo: %.0f%nKendaraan: %s%nPerks: %s%nItems: %s",
         nama, saldo, kendaraan.getNama(), daftarPerk, daftarItem
     );
+    
+
 }
 }
