@@ -38,7 +38,6 @@ public class GamePanel {
 
         con = window.getContentPane();
 
-        // Input nama
         namaPanel = new JPanel();
         namaPanel.setBounds(450, 300, 150, 25);
         namaPanel.setBackground(Color.WHITE);
