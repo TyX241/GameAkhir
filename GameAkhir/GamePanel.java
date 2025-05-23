@@ -186,14 +186,21 @@ private void showBuyBarangScreen() {
         beliBtn.addActionListener(e -> {
             int jumlah = (int) jumlahSpinner.getValue();
             int total = (int) (barang.getHargaBeli() * jumlah);
-            if (pemain.getSaldo() >= total) {
-                pemain.kurangiSaldo(total);
-                rumah.addBarang(barang, jumlah);
-                JOptionPane.showMessageDialog(window, "Berhasil membeli " + jumlah + "x " + barang.getNama());
-                showBuyBarangScreen(); // refresh tampilan
-            } else {
-                JOptionPane.showMessageDialog(window, "Saldo tidak cukup!");
+            int konfirmasi = JOptionPane.showConfirmDialog(window,
+                "Anda akan membeli " + jumlah + "x " + barang.getNama() + " seharga Rp" + total + "\nYakin ingin melanjutkan?",
+                "Konfirmasi Pembelian", JOptionPane.YES_NO_OPTION);
+
+            if (konfirmasi == JOptionPane.YES_OPTION) {
+                if (pemain.getSaldo() >= total) {
+                    pemain.kurangiSaldo(total);
+                    rumah.addBarang(barang, jumlah);
+                    JOptionPane.showMessageDialog(window, "Berhasil membeli " + jumlah + "x " + barang.getNama());
+                    showBuyBarangScreen();
+                } else {
+                    JOptionPane.showMessageDialog(window, "Saldo tidak cukup!");
+                }
             }
+
         });
 
         actionPanel.add(beliBtn);
@@ -360,60 +367,76 @@ private void showBuyBarangScreen() {
         infoArea.setText(info);
     }
     
-private void showPilihLokasiScreen() {
-    ArrayList<Barang> stokBarang = rumah.getStokBarangList();
+    private void showPilihLokasiScreen() {
+        ArrayList<Barang> stokBarang = rumah.getStokBarangList();
 
-    if (stokBarang.isEmpty()) {
-        JOptionPane.showMessageDialog(window, "Stok kosong! Tidak bisa berjualan.");
-        return;
-    }
-
-    String[] pilihanBarang = stokBarang.stream()
-        .map(b -> b.getNama() + " (Stok: " + rumah.getJumlah(b) + ")")
-        .toArray(String[]::new);
-
-    int pilihan = JOptionPane.showOptionDialog(window,
-            "Pilih barang yang akan dijual:",
-            "Pilih Barang",
-            JOptionPane.DEFAULT_OPTION,
-            JOptionPane.QUESTION_MESSAGE,
-            null,
-            pilihanBarang,
-            pilihanBarang[0]);
-
-    if (pilihan == -1) return; // Batal pilih
-
-    Barang barangDipilih = stokBarang.get(pilihan);
-    int hargaAwal = (int) rumah.getHargaJual(barangDipilih);
-
-    String namaPembeli = JOptionPane.showInputDialog(window, "Masukkan nama pembeli:");
-    if (namaPembeli == null || namaPembeli.trim().isEmpty()) return;
-
-    Pembeli pembeli = generatePembeliAcak(namaPembeli);
-    int hargaTawaran = pembeli.tawarHarga(hargaAwal);
-
-    int hasil = JOptionPane.showConfirmDialog(window,
-        "Pembeli: " + pembeli.getNama() +
-        "\nBarang: " + barangDipilih.getNama() +
-        "\nHarga Awal: Rp" + hargaAwal +
-        "\nTawaran: Rp" + hargaTawaran +
-        "\n\nTerima tawaran dan jual barang ini?",
-        "Tawar-Menawar", JOptionPane.YES_NO_OPTION);
-
-    if (hasil == JOptionPane.YES_OPTION) {
-        if (rumah.getJumlah(barangDipilih) > 0) {
-            rumah.kurangiStok(barangDipilih, 1);
-            pemain.tambahSaldo(hargaTawaran);
-            JOptionPane.showMessageDialog(window, "Barang berhasil dijual!");
-        } else {
-            JOptionPane.showMessageDialog(window, "Stok barang habis! Tidak jadi jual.");
+        if (stokBarang.isEmpty()) {
+            JOptionPane.showMessageDialog(window, "Stok kosong! Tidak bisa berjualan.");
+            return;
         }
-    } else {
-        JOptionPane.showMessageDialog(window, "Transaksi dibatalkan.");
+
+        String[] pilihanBarang = stokBarang.stream()
+            .map(b -> b.getNama() + " (Stok: " + rumah.getJumlah(b) + ")")
+            .toArray(String[]::new);
+
+        int pilihan = JOptionPane.showOptionDialog(window,
+                "Pilih barang yang akan dijual:",
+                "Pilih Barang",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                pilihanBarang,
+                pilihanBarang[0]);
+
+        if (pilihan == -1) return;
+
+        Barang barangDipilih = stokBarang.get(pilihan);
+        int stokTersedia = rumah.getJumlah(barangDipilih);
+        int hargaSatuan = (int) rumah.getHargaJual(barangDipilih);
+
+        String jumlahInput = JOptionPane.showInputDialog(window, "Pembeli ingin beli berapa? (Stok: " + stokTersedia + ")");
+        if (jumlahInput == null) return;
+
+        int jumlahBeli;
+        try {
+            jumlahBeli = Integer.parseInt(jumlahInput);
+            if (jumlahBeli <= 0 || jumlahBeli > stokTersedia) {
+                JOptionPane.showMessageDialog(window, "Jumlah tidak valid atau melebihi stok!");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(window, "Masukan tidak valid.");
+            return;
+        }
+
+        String namaPembeli = JOptionPane.showInputDialog(window, "Masukkan nama pembeli:");
+        if (namaPembeli == null || namaPembeli.trim().isEmpty()) return;
+
+        Pembeli pembeli = generatePembeliAcak(namaPembeli);
+        int hargaTawaranSatuan = pembeli.tawarHarga(hargaSatuan);
+        int totalTawaran = hargaTawaranSatuan * jumlahBeli;
+
+        int hasil = JOptionPane.showConfirmDialog(window,
+            "Pembeli: " + pembeli.getNama() +
+            "\nBarang: " + barangDipilih.getNama() +
+            "\nJumlah: " + jumlahBeli +
+            "\nHarga Satuan: Rp" + hargaSatuan +
+            "\nTawaran per unit: Rp" + hargaTawaranSatuan +
+            "\nTotal: Rp" + totalTawaran +
+            "\n\nTerima tawaran dan jual barang ini?",
+            "Tawar-Menawar", JOptionPane.YES_NO_OPTION);
+
+        if (hasil == JOptionPane.YES_OPTION) {
+            rumah.kurangiStok(barangDipilih, jumlahBeli);
+            pemain.tambahSaldo(totalTawaran);
+            JOptionPane.showMessageDialog(window, "Berhasil menjual " + jumlahBeli + "x " + barangDipilih.getNama());
+        } else {
+            JOptionPane.showMessageDialog(window, "Transaksi dibatalkan.");
+        }
+
+        updatePlayerInfo();
     }
 
-    updatePlayerInfo();
-}
 
 
 
@@ -431,5 +454,3 @@ private Pembeli generatePembeliAcak(String nama) {
 
 
 }
-
-
