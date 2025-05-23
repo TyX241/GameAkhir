@@ -198,16 +198,35 @@ public class GamePanel {
         JLabel title = new JLabel("Toko Item");
         title.setFont(fontJudul);
         title.setForeground(Color.WHITE);
-        title.setBounds(220, 20, 600, 150);
+        title.setBounds(220, 20, 600, 100);
         con.add(title);
 
-        JPanel listPanel = new JPanel(new GridLayout(daftarItem.size(), 3, 10, 10));
-        listPanel.setBackground(Color.WHITE);
+        JPanel itemPanel = new JPanel();
+        itemPanel.setLayout(new BoxLayout(itemPanel, BoxLayout.Y_AXIS));
+        itemPanel.setBackground(Color.WHITE);
 
         for (Item item : daftarItem) {
-            listPanel.add(new JLabel(item.getNama()));
-            listPanel.add(new JLabel("Efek: " + item.getEfek() + ", Harga: Rp" + item.getHarga()));
+            JPanel panel = new JPanel(new BorderLayout());
+            panel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.GRAY));
+            panel.setBackground(Color.WHITE);
+            panel.setPreferredSize(new Dimension(750, 90));
+
+            JPanel infoPanel = new JPanel(new GridLayout(2, 1));
+            infoPanel.setBackground(Color.WHITE);
+            infoPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+            JLabel namaLabel = new JLabel(item.getNama());
+            namaLabel.setFont(new Font("Arial", Font.BOLD, 18));
+
+            JLabel infoLabel = new JLabel("Efek: " + item.getEfek() + "    Harga: Rp" + item.getHarga());
+            infoLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+
+            infoPanel.add(namaLabel);
+            infoPanel.add(infoLabel);
+
             JButton beli = new JButton("Beli");
+            beli.setFont(new Font("Arial", Font.BOLD, 16));
+            beli.setPreferredSize(new Dimension(120, 50)); // Perbesar tombol
             beli.addActionListener(e -> {
                 if (pemain.getSaldo() >= item.getHarga()) {
                     pemain.kurangiSaldo(item.getHarga());
@@ -218,16 +237,24 @@ public class GamePanel {
                     JOptionPane.showMessageDialog(window, "Saldo tidak cukup!");
                 }
             });
-            listPanel.add(beli);
+
+            JPanel tombolPanel = new JPanel();
+            tombolPanel.setBackground(Color.WHITE);
+            tombolPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+            tombolPanel.add(beli);
+
+            panel.add(infoPanel, BorderLayout.CENTER);
+            panel.add(tombolPanel, BorderLayout.EAST);
+            itemPanel.add(panel);
         }
 
-        JScrollPane scroll = new JScrollPane(listPanel);
-        scroll.setBounds(100, 200, 700, 250);
+        JScrollPane scroll = new JScrollPane(itemPanel);
+        scroll.setBounds(100, 150, 800, 250);
         con.add(scroll);
 
         JButton kembali = new JButton("Kembali");
         kembali.setFont(fontNormal);
-        kembali.setBounds(800, 500, 200, 60);
+        kembali.setBounds(800, 420, 200, 60);
         kembali.addActionListener(e -> kembali());
         con.add(kembali);
 
@@ -238,7 +265,7 @@ public class GamePanel {
         infoArea.setForeground(Color.WHITE);
         infoArea.setLineWrap(true);
         JScrollPane infoScroll = new JScrollPane(infoArea);
-        infoScroll.setBounds(50, 470, 700, 140);
+        infoScroll.setBounds(50, 500, 950, 140);
         con.add(infoScroll);
 
         window.revalidate();
@@ -257,3 +284,4 @@ public class GamePanel {
     }
 
 }
+
