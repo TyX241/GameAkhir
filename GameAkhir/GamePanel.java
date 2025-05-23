@@ -52,7 +52,6 @@ public class GamePanel {
             namaPanel.setVisible(false);
         });
 
-        // Title dan start
         judulPanel = new JPanel();
         judulPanel.setBounds(220, 100, 600, 150);
         judulPanel.setBackground(Color.BLACK);
@@ -75,7 +74,6 @@ public class GamePanel {
         con.add(judulPanel);
         con.add(tombolStartPanel);
 
-        // Tambah contoh item
         daftarItem.add(new Item("Hipnotis", "Meningkatkan peluang pembeli setuju", 10000, 1, 0));
         daftarItem.add(new Item("Promo", "Meningkatkan minat beli", 7500, 1, 0));
 
@@ -145,15 +143,15 @@ public class GamePanel {
     }
 
     private void showBuyBarangScreen() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        throw new UnsupportedOperationException("Not supported yet."); 
     }
 
     private void tampilkanStok(Rumah rumah) {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        throw new UnsupportedOperationException("Not supported yet."); 
     }
 
     private void showPilihLokasiScreen() {
-        throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+        throw new UnsupportedOperationException("Not supported yet."); 
     }
 
     public class TitleScreenHandler implements ActionListener {
@@ -226,7 +224,7 @@ public class GamePanel {
 
             JButton beli = new JButton("Beli");
             beli.setFont(new Font("Arial", Font.BOLD, 16));
-            beli.setPreferredSize(new Dimension(120, 50)); // Perbesar tombol
+            beli.setPreferredSize(new Dimension(120, 50)); 
             beli.addActionListener(e -> {
                 if (pemain.getSaldo() >= item.getHarga()) {
                     pemain.kurangiSaldo(item.getHarga());
