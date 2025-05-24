@@ -2,11 +2,12 @@ package GameAkhir;
 import java.util.*;
 public class Player implements Interface{
     private String nama;
-    private double saldo = 69420;
+    private double saldo = 1000069420;
     private Kendaraan kendaraan;
     private Rumah rumah;
     private List<Perk> perks;
     private List<Item> items;
+    private Map<String, Integer> itemMap = new HashMap<>();
 
     public Player(String nama, double saldo, Kendaraan kendaraan, Rumah rumah, List<Perk> perks, List<Item> items) {
         this.nama = nama;
@@ -15,16 +16,24 @@ public class Player implements Interface{
         this.rumah = rumah;
         this.perks = perks;
         this.items = new ArrayList<>();
+        this.itemMap = new HashMap<>();
     }
 
     public Player() {
         this.items = new ArrayList<>();
         this.perks = new ArrayList<>();
+        this.itemMap = new HashMap<>();
     }
     
-    public void tambahItem(Item item){
-        items.add(item);
+
+    public void tambahItem(Item item, int jumlah) {
+        itemMap.put(item.getNama(), itemMap.getOrDefault(item.getNama(), 0) + jumlah);
     }
+
+    public int getJumlahItem(String namaItem) {
+        return itemMap.getOrDefault(namaItem, 0);
+    }
+    
     public void tambahPerk(Perk perk){
         if(perks.size() >= 2){
             throw new IllegalStateException("Batas perk tercapai");
@@ -69,9 +78,11 @@ public class Player implements Interface{
             this.saldo -= jumlah;
         }
     }
+    public Kendaraan getKendaraan() {
+        return kendaraan;
+    }
     
-    @Override
-    public String tampilan() {
+   public String tampilan() {
     String daftarPerk = "Tidak ada";
     if (!perks.isEmpty()) {
         daftarPerk = "";
@@ -82,10 +93,10 @@ public class Player implements Interface{
     }
 
     String daftarItem = "Tidak ada";
-    if (!items.isEmpty()) {
+    if (!itemMap.isEmpty()) {
         daftarItem = "";
-        for (Item i : items) {
-            daftarItem += i.getNama() + " x" + i.getJumlah() + ", ";
+        for (Map.Entry<String, Integer> entry : itemMap.entrySet()) {
+            daftarItem += entry.getKey() + " x" + entry.getValue() + ", ";
         }
         daftarItem = daftarItem.substring(0, daftarItem.length() - 2);
     }

@@ -7,6 +7,7 @@ public class TokoItem {
         new Item("Kunci", "Kendaraan + 1", 10000, 2, 2),
         new Item("Obat", "Kesehatan + 100", 10000, 3, 1)
     );
+    private Item item;
     private Player pemain;
     private Rumah rumah;
     private Kendaraan kendaraan;
@@ -45,7 +46,6 @@ public class TokoItem {
             return;
         }
         pemain.setSaldo(pemain.getSaldo() - itemTerpilih.getHarga());
-        pemain.tambahItem(itemTerpilih);
         System.out.println("Item " + itemTerpilih.getNama() + " berhasil dibeli dan ditambahkan ke inventaris pemain.");
     }
 }

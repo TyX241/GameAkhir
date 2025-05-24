@@ -2,10 +2,10 @@ package GameAkhir;
 
 import java.util.Random;
 
-public class PembeliStandard extends Pembeli {
+public class PembeliMiskin extends Pembeli {
     private final Random random = new Random();
 
-    public PembeliStandard(String nama) {
+    public PembeliMiskin(String nama) {
         super(nama);
     }
 

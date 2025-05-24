@@ -5,7 +5,7 @@ public class Item {
     private String efek;
     private double harga;
     private int durasi;
-    private int jumlahl;
+    private int jumlah[] = new int[10];
     private int perluLevel;
 
     public Item(String nama, String efek, double harga, int durasi) {
@@ -31,10 +31,9 @@ public class Item {
     public String getNama() {
         return nama;
     }
-    public int getJumlah() {
-        return jumlahl;
+    public void setJumlah(int jumlah, int index) {
+        this.jumlah[index] += jumlah;
     }
-
     public void setNama(String nama) {
         this.nama = nama;
     }
