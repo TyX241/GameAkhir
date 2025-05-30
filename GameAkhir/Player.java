@@ -24,6 +24,12 @@ public class Player implements Interface{
         this.perks = new ArrayList<>();
         this.itemMap = new HashMap<>();
     }
+    public Player(String nama) {
+        this.nama = nama;
+        this.items = new ArrayList<>();
+        this.perks = new ArrayList<>();
+        this.itemMap = new HashMap<>();
+    }
     
 
     public void tambahItem(Item item, int jumlah) {

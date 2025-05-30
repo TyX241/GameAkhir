@@ -25,21 +25,6 @@ public abstract class Perk implements Upgradable{
     public double getEfek(){
         return 0;
     }
-    /*public void ubahAbility(){
-        if(nama == "Elegan"){
-            nama = "Charming";
-            tingkatKesaktian = 1;
-            ability = 1;
-        }else if(nama == "Charming"){
-            nama = "Active";
-            tingkatKesaktian = 1;
-            ability = 1;
-        }else if(nama == "Active"){ 
-            nama = "Elegan";
-            tingkatKesaktian = 1;
-            ability = 1;
-        }
-    }*/
 }
     class PerkElegan extends Perk{
         public PerkElegan(String nama, int tingkatKesaktian){
@@ -92,7 +77,7 @@ public abstract class Perk implements Upgradable{
 
         @Override
         public double getEfek() {
-            return 0.2 * tingkatKesaktian;
+            return 0.1 * tingkatKesaktian;
         }
     }
     class PerkActive extends Perk{
@@ -118,6 +103,6 @@ public abstract class Perk implements Upgradable{
 
         @Override
         public double getEfek() {
-            return 0.3 * tingkatKesaktian;
+            return 0.1 * tingkatKesaktian;
         }
     }
