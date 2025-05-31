@@ -14,9 +14,12 @@ public class Supplier {
         this.rumah = rumah;
         this.pemain = pemain;
         this.game = game;
-        daftarBarang.add(new Barang("Pensil",1000, 1200));
-        daftarBarang.add(new Barang("Pena",2000, 2200));
-        daftarBarang.add(new Barang("Buku",3000, 3200));
+        daftarBarang.add(new Barang("Ester",1000, 1200));
+        daftarBarang.add(new Barang("Orirock",2000, 2200));
+        daftarBarang.add(new Barang("Oriron",3000, 3200));
+        daftarBarang.add(new Barang("Grindstone",4000, 4200));
+        daftarBarang.add(new Barang("Crystaline",5000, 5200));
+        daftarBarang.add(new Barang("D32 Steel",6000, 6200));
     }
     
     public void beliBarang(){

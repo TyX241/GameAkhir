@@ -7,7 +7,7 @@ public abstract class Pembeli {
     protected final String nama;
     protected int tingkatKesabaranDefault;
     protected int kesabaranSaatIni;
-    protected Random random = new Random();
+    protected static Random random = new Random();
 
     public Pembeli(String nama, int tingkatKesabaranDefault) {
         this.nama = nama;
@@ -29,7 +29,7 @@ public abstract class Pembeli {
      * @param hargaTawaranTerakhirPembeli Tawaran terakhir dari pembeli sendiri (sebagai referensi).
      * @return true jika pembeli setuju membeli, false jika tidak.
      */
-    public abstract boolean putuskanBeli(int hargaFinalDariPlayer, int hargaTawaranTerakhirPembeli);
+    public abstract boolean putuskanBeli(int hargaFinalDariPlayer, int hargaTawaranTerakhirPembeli, List<Perk> perks);
 
     /**
      * Pembeli memilih satu barang dari daftar barang yang tersedia di kendaraan pemain.
@@ -62,5 +62,22 @@ public abstract class Pembeli {
 
     public int getTingkatKesabaranDefault() {
         return tingkatKesabaranDefault;
+    }
+    public static boolean peluangBertemu(List<Perk> perk){
+        double buff = 0.0;
+        if (perk != null) {
+        for (Perk p : perk) {
+            if (p instanceof PerkActive) {
+                buff += p.getEfek();
+            }
+            double peluangDasar = 0.5;
+            double peluang = peluangDasar + (1.0 - peluangDasar) * buff;
+            return random.nextDouble() < peluang;
+        }
+        if(buff > 0.5){
+            buff = 0.5;
+        }
+    }
+        return random.nextInt(100) < 50;
     }
 }

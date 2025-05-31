@@ -59,13 +59,24 @@ public class PembeliMiskin extends Pembeli {
     }
 
     @Override
-    public boolean putuskanBeli(int hargaFinalDariPlayer, int hargaTawaranTerakhirPembeli) {
+    public boolean putuskanBeli(int hargaFinalDariPlayer, int hargaTawaranTerakhirPembeli, List<Perk> perks) {
+        double buff = 0;
+        if (perks != null) {
+            for (Perk p : perks) {
+                if (p instanceof PerkElegan) {
+                    buff += p.getEfek();
+                }
+            }
+            if(buff > 0.5){
+                buff = 0.5; // Batasi buff maksimum
+            }
+        }
         // Sangat sensitif harga. Cenderung beli jika harga player SAMA atau sedikit di atas tawaran terakhirnya.
         if (hargaFinalDariPlayer <= hargaTawaranTerakhirPembeli * 1.05) { // Max 5% di atas tawarannya
-            return random.nextDouble() < 0.75; // 75% peluang beli
+            return random.nextDouble() < 0.75 + buff; // 75% peluang beli
         } else if (hargaFinalDariPlayer <= hargaTawaranTerakhirPembeli * 1.15) { // Max 15% di atas tawarannya
-            return random.nextDouble() < 0.30; // 30% peluang beli
+            return random.nextDouble() < 0.30 + buff; // 30% peluang beli
         }
-        return random.nextDouble() < 0.05; // 5% peluang jika harga jauh lebih tinggi
+        return random.nextDouble() < 0.05 + buff; // 5% peluang jika harga jauh lebih tinggi
     }
 }

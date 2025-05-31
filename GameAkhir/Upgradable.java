@@ -1,5 +1,5 @@
 package GameAkhir;
 
 public interface Upgradable {
-    void upgrade();
+    void upgrade() throws GameException;
 }

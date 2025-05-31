@@ -41,15 +41,26 @@ public class PembeliTajir extends Pembeli {
     }
 
     @Override
-    public boolean putuskanBeli(int hargaFinalDariPlayer, int hargaTawaranTerakhirPembeli) {
+    public boolean putuskanBeli(int hargaFinalDariPlayer, int hargaTawaranTerakhirPembeli, List<Perk> perks) {
+        double buff = 0;
+        if (perks != null) {
+            for (Perk p : perks) {
+                if (p instanceof PerkElegan) {
+                    buff += p.getEfek();
+                }
+            }
+            if(buff > 0.5){
+                buff = 0.5; // Batasi buff maksimum
+            }
+        }
         // Pembeli Tajir tidak terlalu sensitif harga jika sudah dekat dengan tawarannya (yang biasanya sudah tinggi).
         // Mereka lebih melihat apakah harga final dari player itu "masuk akal" relatif terhadap apa yang mereka anggap fair value (tawaran terakhir mereka).
         if (hargaFinalDariPlayer <= hargaTawaranTerakhirPembeli * 1.02) { // Sangat dekat atau sama dengan tawarannya (max 2% di atas)
-            return random.nextDouble() < 0.98; // Hampir pasti beli (98% peluang)
+            return random.nextDouble() < 0.98 + buff; // Hampir pasti beli (98% peluang)
         } else if (hargaFinalDariPlayer <= hargaTawaranTerakhirPembeli * 1.10) { // Sedikit di atas tawarannya (max 10% di atas)
-            return random.nextDouble() < 0.85; // Masih sangat mungkin beli (85% peluang)
+            return random.nextDouble() < 0.85 + buff; // Masih sangat mungkin beli (85% peluang)
         } else if (hargaFinalDariPlayer <= hargaTawaranTerakhirPembeli * 1.20) { // Agak jauh (max 20% di atas)
-            return random.nextDouble() < 0.50; // Peluang 50/50
+            return random.nextDouble() < 0.50 + buff; // Peluang 50/50
         }
         // Jika harga yang ditawarkan pemain jauh lebih tinggi dari tawaran terakhir pembeli tajir
         return random.nextDouble() < 0.20; // Peluang kecil untuk beli (20%)

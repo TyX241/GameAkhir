@@ -5,55 +5,52 @@ import java.awt.event.*;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
-
+import java.io.InputStream;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.text.NumberFormatter;
 
 public class GamePanel {
-    private DefaultTableModel invModel, cartModel;
-    private JTable invTable, cartTable;
-    private JSpinner qtySpinner;
-    private JTextField priceField;
     JLabel gambarPembeliLabelDiLayar;
     JLabel gambarPenjual;
     JLabel gambarMC;
-    JTextArea dialogPembeliLabelDiLayar;
+    JTextArea dialogNPC;
     JLabel kesabaranPembeliLabelDiLayar;
     JTextArea infoBarangDitawarAreaDiLayar;
     JFormattedTextField inputHargaPlayerDiLayar;
-    JButton btnTawarDiLayar, btnJualDiLayar, btnBatalJualDiLayar;
+    JButton btnTawarDiLayar, btnJualDiLayar, btnBatalJualDiLayar,btnToko;
     JTextArea inventarisKendaraanAreaDiLayar;
     private JLabel backgroundLabel;
     private Barang barangYangDipilihPembeli = null;
     private Pembeli pembeliSaatIni = null;
     private String kotaTransaksiSaatIni = null;
     private int hargaTawaranAwalPembeli = 0;
-    
-    private JLabel labelDialogPembeli;
-    private JFormattedTextField inputHargaPlayer;
-    private JLabel labelKesabaranPembeli;
-    private JButton btnTawarKePembeli, btnJualKePembeli; // Tambahkan btnJualKePembeli
-    private JTextArea infoBarangKendaraanTextArea; // Untuk menampilkan barang di kendaraan
+    private int totalPembeliSesi = 0;
+    private int pembeliKe = 0;
+    private SaveFile saveFile;
+     // Untuk menampilkan barang di kendaraan
     String nama;
     JLayeredPane layeredPane;
     Player pemain = new Player("Abi");
     Rumah rumah = new Rumah();
-    Kendaraan kendaraan = new Kendaraan("Trek", 5, 1);
+    Kendaraan kendaraan = new Kendaraan(5, 1);
      // Inisialisasi inventori kendaraan
     ArrayList<Barang> daftarBarang = new ArrayList<>();
     ArrayList<Item> daftarItem = new ArrayList<>();
+    ArrayList<Perk> daftarPerk = new ArrayList<>();
     Peta peta = new Peta();
     TokoItem tokoItem = new TokoItem(daftarItem, pemain, rumah, kendaraan);
     Supplier supplier = new Supplier(daftarBarang, rumah, pemain, this);
+    TokoPerk tokoPerk = new TokoPerk(daftarPerk,pemain);
+    Random rand = new Random();
 
     JFrame window;
     JLayeredPane con;
     JPanel namaPanel, judulPanel, tombolStartPanel, mainTextPanel, tombolPilihanPanel, panelPemain;
-    JLabel judulLabel;
-    JButton tombolStart, pil1, pil2, pil3, pil4, pil5;
+    JLabel judulLabel, judulLabel2;
+    JButton tombolStart, tombolLoad, pil1, pil2, pil3, pil4, pil5;
     
-     JTextField inputNamaPemainField;
+    JTextField inputNamaPemainField;
     JPanel namaPanel_LayarAwal; // Direname dari namaPanel
     JPanel judulPanel_LayarAwal;
     JButton tombolStart_LayarAwal;
@@ -73,15 +70,20 @@ public class GamePanel {
     JTextArea mainTextArea_GameNormal; // Direname dari mainTextArea
     JPanel tombolPilihanPanel_GameNormal; // Direname dari tombolPilihanPanel
     JButton pil1_GameNormal, pil2_GameNormal, pil3_GameNormal, pil4_GameNormal, pil5_GameNormal; // 
-    Font fontJudul = new Font("Times New Roman", Font.PLAIN, 90);
+    
+    Font fontJudul, fontJudulBold;
+    
+    
     Font fontNormal = new Font("Times New Roman", Font.PLAIN, 20);
     JTextArea mainTextArea;
     String position;
-    private ArrayList<JSpinner> spinners;
 
     public GamePanel() {
+        fontJudul = testFont("Serif", 90f);
+        fontJudulBold = testFont("Serif", 90f);
         kendaraan.tambahBarang(new Barang("Pensil", 10000, 10000), 5);
         pemain.setKendaraan(kendaraan);
+        pemain.tambahPerkDimiliki(new PerkElegan("Hipnotis", 1));
         window = new JFrame();
         window.setSize(1280, 720);
         window.setResizable(false);
@@ -94,6 +96,7 @@ public class GamePanel {
         window.setContentPane(layeredPane);
         con = layeredPane;
 
+        saveFile = new SaveFile();
         backgroundLabel = new JLabel();
         backgroundLabel.setBounds(0, 0, 1280, 720);
         ImageIcon icon = new ImageIcon(getClass().getResource("/GameAkhir/Asset/Menu.jpeg")); // Ganti sesuai nama file default kamu
@@ -115,34 +118,65 @@ public class GamePanel {
             namaPanel.setVisible(false);
         });
 
-        judulPanel = new JPanel();
-        judulPanel.setBounds(320, 100, 600, 150);
-        judulPanel.setBackground(Color.BLACK);
-        judulLabel = new JLabel("SHOP");
+        judulLabel = new JLabel("POST-APOCALYPTRADE");
         judulLabel.setForeground(Color.WHITE);
+        fontJudul = fontJudul.deriveFont(60f);
         judulLabel.setFont(fontJudul);
+        judulLabel.setBounds(270, 100, 750, 130);
+        judulLabel2 = new JLabel("POST-APOCALYPTRADE");
+        judulLabel2.setForeground(Color.BLACK);
+        judulLabel2.setFont(fontJudul);
+        judulLabel2.setBounds(275, 100, 750, 130);
 
-        tombolStartPanel = new JPanel();
-        tombolStartPanel.setBounds(520, 400, 200, 100);
-        tombolStartPanel.setBackground(Color.BLACK);
+        tombolLoad = new JButton("LOAD");
+        tombolLoad.setBackground(Color.black);
+        tombolLoad.setForeground(Color.white);
+        tombolLoad.setFont(fontNormal);
+        tombolLoad.setBounds(500, 300, 200, 50);
+        tombolLoad.addActionListener(e -> {
+            Object[] hasilLoad = saveFile.muatProgress(daftarBarang, daftarItem);
+            if (hasilLoad != null) {
+                this.pemain = (Player) hasilLoad[0];
+                this.kendaraan = (Kendaraan) hasilLoad[1];
+                this.rumah = (Rumah) hasilLoad[2];
+                GameScreen();
+                JOptionPane.showMessageDialog(window, "Game berhasil dimuat!", "Load", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(window, "Gagal memuat game!", "Load Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        
 
         tombolStart = new JButton("START");
         tombolStart.setBackground(Color.black);
         tombolStart.setForeground(Color.white);
         tombolStart.setFont(fontNormal);
         tombolStart.addActionListener(new TitleScreenHandler());
-
-        judulPanel.add(judulLabel);
-        tombolStartPanel.add(tombolStart);
-        con.add(judulPanel, Integer.valueOf(1));
-        con.add(tombolStartPanel, Integer.valueOf(1));
-
+        tombolStart.setBounds(500, 400, 200, 50);
+        con.add(judulLabel2, Integer.valueOf(1));
+        con.add(judulLabel, Integer.valueOf(2));
+        con.add(tombolStart, Integer.valueOf(1));
+        con.add(tombolLoad, Integer.valueOf(1));
         daftarItem.add(new Item("Hipnotis", "Meningkatkan peluang pembeli setuju", 10000, 1, 0));
         daftarItem.add(new Item("Promo", "Meningkatkan minat beli", 7500, 1, 0));
-        
+        daftarPerk.add(new PerkElegan("Elegan",1));
+        daftarPerk.add(new PerkActive("Aktif",1));
+        daftarPerk.add(new PerkCharming("Charming",1));
 
-        window.setVisible(true);
-    }
+        gambarPembeliLabelDiLayar      = new JLabel();
+        kesabaranPembeliLabelDiLayar   = new JLabel();
+        dialogNPC      = new JTextArea();
+        infoBarangDitawarAreaDiLayar   = new JTextArea();
+        inputHargaPlayerDiLayar        = new JFormattedTextField();
+        btnTawarDiLayar                = new JButton();
+        btnJualDiLayar                 = new JButton();
+        btnBatalJualDiLayar            = new JButton();
+        inventarisKendaraanAreaDiLayar = new JTextArea();
+        saldoPemainLabel_ModeJual      = new JLabel();
+
+        
+            window.setVisible(true);
+        }
 
     public void GameScreen() {
         con.removeAll();
@@ -222,13 +256,30 @@ public class GamePanel {
             gambarMC.setText("");
         con.add(gambarMC, Integer.valueOf(1));
     }
+    public Font testFont(String fontName, float size) {
+        String fontnama = "/GameAkhir/Asset/Font/"+fontName+".ttf";
+        System.out.println("Coba load font: " + fontnama);
+        InputStream is = getClass().getResourceAsStream(fontnama);
+        try {
+            Font font = Font.createFont(Font.TRUETYPE_FONT, getClass().getResourceAsStream(fontnama))
+                .deriveFont(Font.PLAIN, size);
+            GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(font);
+            return font;
+        } catch (Exception e) {
+            System.err.println("Font custom gagal dimuat, pakai default.");
+            return new Font("Serif", Font.BOLD, (int) size);
+        }
+    }
+    public void Stroke(JLabel label, Color color, int x, int y, int w, int h){
+        
+    }
 
 private void showBuyBarangScreen() {
     con.removeAll();
     gambarPenjual = new JLabel();
     gambarPenjual.setHorizontalAlignment(SwingConstants.CENTER);
-    String pathPenjual = "Asset/Trader.png";
-    gambarPenjual.setBounds(650, 100, 720, 720);
+    String pathPenjual = "Asset/Amiya1.png";
+    gambarPenjual.setBounds(580, 0, 1040, 1040);
     try {
         ImageIcon iconPenjual = new ImageIcon(getClass().getResource("/GameAkhir/" + pathPenjual));
         Image imgPenjual = iconPenjual.getImage().getScaledInstance(gambarPenjual.getWidth(), gambarPenjual.getHeight(), Image.SCALE_SMOOTH);
@@ -236,19 +287,35 @@ private void showBuyBarangScreen() {
         gambarPenjual.setText("");
     } catch (Exception ex) {
         gambarPenjual.setIcon(null);
-        gambarPenjual.setText("Gbr: " + pembeliSaatIni.getClass().getSimpleName().substring(0,Math.min(7,pembeliSaatIni.getClass().getSimpleName().length())));
-        gambarPenjual.setForeground(Color.WHITE);
-        System.err.println("Err gbr pembeli: " + "/GameAkhir/" + pathPenjual + " - " + ex.getMessage());
+        gambarPenjual.setText("Gambar tidak ditemukan");
     }
     con.add(gambarPenjual, Integer.valueOf(1));
     setBackgroundImage("S");
     con.add(backgroundLabel, Integer.valueOf(0));
 
-    JLabel title = new JLabel("Toko Barang / Supplier");
+    dialogNPC.setText("Selamat datang di toko barang!");
+    dialogNPC.setBounds(730, 200, 250, 30);
+    dialogNPC.setFont(fontNormal);
+    dialogNPC.setEditable(false);
+    dialogNPC.setLineWrap(true);
+    dialogNPC.setWrapStyleWord(true);
+    dialogNPC.setBackground(Color.BLACK);
+    dialogNPC.setForeground(Color.WHITE);
+    dialogNPC.setBorder(BorderFactory.createLineBorder(Color.WHITE, 2));
+    con.add(dialogNPC, Integer.valueOf(2));
+
+    JLabel title = new JLabel("Toko Barang");
+    fontJudul = fontJudul.deriveFont(90f);
     title.setFont(fontJudul);
     title.setForeground(Color.WHITE);
-    title.setBounds(220, 20, 600, 100);
-    con.add(title, Integer.valueOf(1));
+    title.setBounds(150, 40, 600, 110);
+    con.add(title, Integer.valueOf(2));
+    JLabel title2 = new JLabel("Toko Barang");
+    fontJudulBold = fontJudul.deriveFont(90f);
+    title2.setFont(fontJudulBold);
+    title2.setForeground(Color.BLACK);
+    title2.setBounds(155, 40, 600, 110);
+    con.add(title2, Integer.valueOf(1));
 
     JPanel barangPanel = new JPanel();
     barangPanel.setLayout(new BoxLayout(barangPanel, BoxLayout.Y_AXIS));
@@ -296,6 +363,7 @@ private void showBuyBarangScreen() {
                     rumah.addBarang(barang, jumlah);
                     JOptionPane.showMessageDialog(window, "Berhasil membeli " + jumlah + "x " + barang.getNama());
                     showBuyBarangScreen();
+                    updatePenjual(jumlah, pathPenjual);
                 } else {
                     JOptionPane.showMessageDialog(window, "Saldo tidak cukup!");
                 }
@@ -317,7 +385,7 @@ private void showBuyBarangScreen() {
     JButton kembali = new JButton("Kembali");
     kembali.setFont(fontNormal);
     kembali.setBounds(800, 420, 200, 60);
-    kembali.addActionListener(e -> kembali());
+    kembali.addActionListener(e -> kembaliMenu());
     con.add(kembali, Integer.valueOf(2));
 
     JTextArea infoArea = new JTextArea(pemain.tampilan());
@@ -333,6 +401,50 @@ private void showBuyBarangScreen() {
     window.revalidate();
     window.repaint();
 }
+    public void updatePenjual(int jumBarang, String path){
+        if(jumBarang > 10){
+            dialogNPC.setText("EHHH!!!??? Beneran kamu beli sebanyak ini ?");
+            dialogNPC.setBounds(730, 200, 250, 60);
+            path = "Asset/Amiya2.png";
+        }else{
+            path = "Asset/Amiya3.png";
+            int angka = rand.nextInt(5) + 1;
+            switch(angka){
+                case 1:
+                    dialogNPC.setText("Terima kasih sudah belanja");
+                    dialogNPC.setBounds(730, 200, 250, 30);
+                    break;
+                case 2:
+                    dialogNPC.setText("Semoga barang ini bermanfaat");
+                    dialogNPC.setBounds(730, 200, 250, 30);
+                    break;
+                case 3:
+                    dialogNPC.setText("Silakan datang lagi kalau butuh sesuatu");
+                    dialogNPC.setBounds(730, 200, 250, 60);
+                    break;
+                case 4:
+                    dialogNPC.setText("Barang ini sudah saya pilihkan khusus untuk kamu");
+                    dialogNPC.setBounds(730, 200, 250, 60);
+                    break;
+                case 5:
+                    dialogNPC.setText("Semoga kamu suka dengan barang ini");
+                    dialogNPC.setBounds(730, 200, 250, 60);
+                    break;
+            }
+            
+        }
+        try {
+        ImageIcon iconPenjual = new ImageIcon(getClass().getResource("/GameAkhir/" + path));
+        Image imgPenjual = iconPenjual.getImage().getScaledInstance(gambarPenjual.getWidth(), gambarPenjual.getHeight(), Image.SCALE_SMOOTH);
+        gambarPenjual.setIcon(new ImageIcon(imgPenjual));
+        gambarPenjual.setText("");
+        } catch (Exception ex) {
+            gambarPenjual.setIcon(null);
+            gambarPenjual.setText("Gambar tidak ditemukan");
+        }
+        window.revalidate();
+        window.repaint();
+    }
 
 
 
@@ -350,8 +462,8 @@ private void showBuyBarangScreen() {
     public void homeChoice() {
         position = "rumah";
         pil1.setText("Beli Barang");
-        pil2.setText("Beli Item");
-        pil3.setText("Info Pemain");
+        pil2.setText("Save Game");
+        pil3.setText("Atur Perks");
         pil4.setText("Atur Stok");
         pil5.setText("Berjualan");
     }
@@ -363,20 +475,362 @@ private void showBuyBarangScreen() {
                 updatePlayerInfo();
                 break;
             case 2:
-                showBeliItemScreen();
+                save();
                 break;
             case 3:
-                pemain.tampilan();
+                showAturPerk();
                 break;
             case 4:
                 showManageInventoryDialog();
+                updatePlayerInfo();
                 break;
             case 5:
                 pilihLokasi();
                 break;
         }
     }
+    public void showAturPerk(){
+        JDialog aturPerkDialog = new JDialog(window, "Atur Pasif Perks", true);
+        aturPerkDialog.setSize(800, 600);
+        aturPerkDialog.setLocationRelativeTo(window);
+        aturPerkDialog.setLayout(new BorderLayout(10, 10));
+         // --- Panel Kiri: Daftar Perk yang Dimiliki ---
+    JPanel panelKiri = new JPanel(new BorderLayout(5,5));
+    panelKiri.setBorder(BorderFactory.createTitledBorder("Perk Dimiliki"));
+    DefaultListModel<Perk> listModelDimiliki = new DefaultListModel<>();
+    JList<Perk> listPerkDimiliki = new JList<>(listModelDimiliki);
+    listPerkDimiliki.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    listPerkDimiliki.setCellRenderer(new PerkListCellRenderer()); // Custom renderer untuk tampilan lebih baik
 
+    // Isi daftar perk yang dimiliki
+    Runnable refreshListDimiliki = () -> {
+        listModelDimiliki.clear();
+        for (Perk p : pemain.getSemuaPerkDimiliki()) {
+            listModelDimiliki.addElement(p);
+        }
+    };
+    refreshListDimiliki.run();
+    panelKiri.add(new JScrollPane(listPerkDimiliki), BorderLayout.CENTER);
+
+    // --- Panel Tengah: Info Perk Terpilih & Aksi ---
+    JPanel panelTengah = new JPanel();
+    panelTengah.setLayout(new BoxLayout(panelTengah, BoxLayout.Y_AXIS));
+    panelTengah.setBorder(BorderFactory.createTitledBorder("Detail & Aksi Perk"));
+    
+    JTextArea infoPerkTerpilihArea = new JTextArea(5, 25);
+    infoPerkTerpilihArea.setEditable(false);
+    infoPerkTerpilihArea.setLineWrap(true);
+    infoPerkTerpilihArea.setWrapStyleWord(true);
+    infoPerkTerpilihArea.setFont(fontNormal.deriveFont(14f));
+    JScrollPane scrollInfoPerk = new JScrollPane(infoPerkTerpilihArea);
+    panelTengah.add(scrollInfoPerk);
+    panelTengah.add(Box.createRigidArea(new Dimension(0,10)));
+
+    JButton btnUpgradePerk = new JButton("Upgrade Perk"); btnUpgradePerk.setEnabled(false);
+    JButton btnUbahAbilityPerk = new JButton("Ubah Ability"); btnUbahAbilityPerk.setEnabled(false);
+    JButton btnAktifkanSlot1 = new JButton("Aktifkan ke Slot 1"); btnAktifkanSlot1.setEnabled(false);
+    JButton btnAktifkanSlot2 = new JButton("Aktifkan ke Slot 2"); btnAktifkanSlot2.setEnabled(false);
+    JButton btnJualPerk = new JButton("Jual Perk (TODO)"); btnJualPerk.setEnabled(false); // Fitur tambahan
+
+    btnUpgradePerk.setAlignmentX(Component.CENTER_ALIGNMENT);
+    btnUbahAbilityPerk.setAlignmentX(Component.CENTER_ALIGNMENT);
+    btnAktifkanSlot1.setAlignmentX(Component.CENTER_ALIGNMENT);
+    btnAktifkanSlot2.setAlignmentX(Component.CENTER_ALIGNMENT);
+    btnJualPerk.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+    panelTengah.add(btnUpgradePerk);
+    panelTengah.add(Box.createRigidArea(new Dimension(0,5)));
+    panelTengah.add(btnUbahAbilityPerk);
+    panelTengah.add(Box.createRigidArea(new Dimension(0,15)));
+    panelTengah.add(btnAktifkanSlot1);
+    panelTengah.add(Box.createRigidArea(new Dimension(0,5)));
+    panelTengah.add(btnAktifkanSlot2);
+    panelTengah.add(Box.createRigidArea(new Dimension(0,15)));
+    panelTengah.add(btnJualPerk);
+    panelTengah.add(Box.createVerticalGlue());
+
+
+    // --- Panel Kanan: Perk Aktif ---
+    JPanel panelKanan = new JPanel(new BorderLayout(5,5));
+    panelKanan.setBorder(BorderFactory.createTitledBorder("Perk Aktif"));
+    DefaultListModel<String> listModelAktif = new DefaultListModel<>();
+    JList<String> listPerkAktif = new JList<>(listModelAktif); // Hanya tampilkan nama & info
+    listPerkAktif.setEnabled(false); // Tidak bisa dipilih langsung dari sini untuk aksi
+    
+    Runnable refreshListAktif = () -> {
+        listModelAktif.clear();
+        List<Perk> aktif = pemain.getPerkAktif();
+        listModelAktif.addElement("Slot 1: " + (aktif.size() > 0 && aktif.get(0) != null ? aktif.get(0).getNama() : "[Kosong]"));
+        listModelAktif.addElement("Slot 2: " + (aktif.size() > 1 && aktif.get(1) != null ? aktif.get(1).getNama() : "[Kosong]"));
+    };
+    refreshListAktif.run();
+    panelKanan.add(new JScrollPane(listPerkAktif), BorderLayout.CENTER);
+    
+    JButton btnLepasSlot1 = new JButton("Lepas Slot 1");
+    JButton btnLepasSlot2 = new JButton("Lepas Slot 2");
+    JPanel panelTombolLepas = new JPanel(new GridLayout(1,2,5,0));
+    panelTombolLepas.add(btnLepasSlot1);
+    panelTombolLepas.add(btnLepasSlot2);
+    panelKanan.add(panelTombolLepas, BorderLayout.SOUTH);
+
+
+    // --- Listener untuk list Perk Dimiliki ---
+    listPerkDimiliki.addListSelectionListener(e -> {
+        if (!e.getValueIsAdjusting()) {
+            Perk terpilih = listPerkDimiliki.getSelectedValue();
+            if (terpilih != null) {
+                infoPerkTerpilihArea.setText(
+                    "Nama: " + terpilih.getNama() + "\n" +
+                    "Jenis: " + terpilih.getClass().getSimpleName().replace("Perk", "") + "\n" +
+                    "Level: " + terpilih.getTingkatKesaktian() + " / 5\n" +
+                    "Efek: " + terpilih.getDeskripsiEfek() + "\n\n" +
+                    (terpilih.getTingkatKesaktian() < 5 ? "Biaya Upgrade: Rp" + String.format("%,d", terpilih.getHargaUpgrade()) : "Level Maksimal") + "\n" +
+                    "Biaya Ubah Ability: Rp" + String.format("%,d", terpilih.getBiayaUbahAbility())
+                );
+                btnUpgradePerk.setEnabled(terpilih.getTingkatKesaktian() < 5);
+                btnUbahAbilityPerk.setEnabled(true);
+                btnAktifkanSlot1.setEnabled(true);
+                btnAktifkanSlot2.setEnabled(true);
+                btnJualPerk.setEnabled(true); // Jika ingin implementasi jual
+            } else {
+                infoPerkTerpilihArea.setText("Pilih perk untuk melihat detail.");
+                btnUpgradePerk.setEnabled(false);
+                btnUbahAbilityPerk.setEnabled(false);
+                btnAktifkanSlot1.setEnabled(false);
+                btnAktifkanSlot2.setEnabled(false);
+                btnJualPerk.setEnabled(false);
+            }
+        }
+    });
+
+    // --- Action Listeners untuk Tombol ---
+    btnUpgradePerk.addActionListener(e -> {
+        Perk terpilih = listPerkDimiliki.getSelectedValue();
+        if (terpilih != null && terpilih.getTingkatKesaktian() < 5) {
+            int biaya = terpilih.getHargaUpgrade();
+            int konfirmasi = JOptionPane.showConfirmDialog(aturPerkDialog,
+                "Upgrade perk '" + terpilih.getNama() + "' ke level " + (terpilih.getTingkatKesaktian() + 1) + " dengan biaya Rp" + String.format("%,d", biaya) + "?",
+                "Konfirmasi Upgrade", JOptionPane.YES_NO_OPTION);
+            if (konfirmasi == JOptionPane.YES_OPTION) {
+                if (pemain.getSaldo() >= biaya) {
+                    try {
+                        pemain.kurangiSaldo(biaya);
+                        terpilih.upgrade();
+                        JOptionPane.showMessageDialog(aturPerkDialog, "Perk '" + terpilih.getNama() + "' berhasil di-upgrade!");
+                        refreshListDimiliki.run(); // Refresh list
+                        refreshListAktif.run(); // Refresh list aktif jika perk ini aktif
+                        listPerkDimiliki.setSelectedValue(terpilih, true); // Pilih lagi untuk update info
+                    } catch (GameException ex) {
+                        pemain.tambahSaldo(biaya); // Kembalikan saldo jika gagal
+                        JOptionPane.showMessageDialog(aturPerkDialog, "Gagal upgrade: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(aturPerkDialog, "Saldo tidak cukup untuk upgrade.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }
+    });
+
+    btnUbahAbilityPerk.addActionListener(e -> {
+        Perk terpilihLama = listPerkDimiliki.getSelectedValue();
+        if (terpilihLama != null) {
+            int biaya = terpilihLama.getBiayaUbahAbility();
+            String namaPerkBaruInput = JOptionPane.showInputDialog(aturPerkDialog, "Masukkan nama baru untuk perk setelah diubah (atau biarkan kosong untuk nama default):", terpilihLama.getNama());
+            if (namaPerkBaruInput == null) return; // User cancel
+
+            String namaPerkBaru = namaPerkBaruInput.trim().isEmpty() ? "Perk Baru" : namaPerkBaruInput.trim();
+
+
+            int konfirmasi = JOptionPane.showConfirmDialog(aturPerkDialog,
+                "Ubah ability perk '" + terpilihLama.getNama() + "' dengan biaya Rp" + String.format("%,d", biaya) + "?\nLevel akan direset ke 1.",
+                "Konfirmasi Ubah Ability", JOptionPane.YES_NO_OPTION);
+            if (konfirmasi == JOptionPane.YES_OPTION) {
+                if (pemain.getSaldo() >= biaya) {
+                    try {
+                        Perk perkBaruHasilUbah = terpilihLama.ubahAbility(namaPerkBaru); // Beri nama baru
+                        pemain.kurangiSaldo(biaya);
+                        pemain.hapusPerkDimiliki(terpilihLama); // Hapus perk lama
+                        pemain.tambahPerkDimiliki(perkBaruHasilUbah); // Tambah perk baru
+
+                        JOptionPane.showMessageDialog(aturPerkDialog, "Ability perk berhasil diubah menjadi " + perkBaruHasilUbah.getClass().getSimpleName().replace("Perk","") + "!");
+                        refreshListDimiliki.run();
+                        refreshListAktif.run();
+                        listPerkDimiliki.clearSelection(); // Kosongkan pilihan
+                        infoPerkTerpilihArea.setText("Pilih perk untuk melihat detail.");
+                    } catch (GameException ex) {
+                        pemain.tambahSaldo(biaya);
+                        JOptionPane.showMessageDialog(aturPerkDialog, "Gagal ubah ability: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                } else {
+                    JOptionPane.showMessageDialog(aturPerkDialog, "Saldo tidak cukup untuk ubah ability.", "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }
+    });
+
+    btnAktifkanSlot1.addActionListener(e -> {
+        Perk terpilih = listPerkDimiliki.getSelectedValue();
+        if (terpilih != null) {
+            if (pemain.setPerkAktif(terpilih, 0)) {
+                refreshListAktif.run();
+                JOptionPane.showMessageDialog(aturPerkDialog, terpilih.getNama() + " diaktifkan di Slot 1.");
+            } else {
+                 JOptionPane.showMessageDialog(aturPerkDialog, "Tidak bisa mengaktifkan perk ini di Slot 1 (mungkin sudah aktif di slot lain atau slot tidak valid).", "Gagal", JOptionPane.WARNING_MESSAGE);
+            }
+        }
+    });
+    btnAktifkanSlot2.addActionListener(e -> {
+        Perk terpilih = listPerkDimiliki.getSelectedValue();
+         if (terpilih != null) {
+            if (pemain.setPerkAktif(terpilih, 1)) {
+                refreshListAktif.run();
+                JOptionPane.showMessageDialog(aturPerkDialog, terpilih.getNama() + " diaktifkan di Slot 2.");
+            } else {
+                 JOptionPane.showMessageDialog(aturPerkDialog, "Tidak bisa mengaktifkan perk ini di Slot 2 (mungkin sudah aktif di slot lain atau slot tidak valid).", "Gagal", JOptionPane.WARNING_MESSAGE);
+            }
+        }
+    });
+    
+    btnLepasSlot1.addActionListener(e -> {
+        pemain.lepasPerkAktif(0);
+        refreshListAktif.run();
+    });
+    btnLepasSlot2.addActionListener(e -> {
+        pemain.lepasPerkAktif(1);
+        refreshListAktif.run();
+    });
+
+    // TODO: Implementasi btnJualPerk jika diinginkan
+
+    // --- Gabungkan Panel ---
+    JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelKiri, panelTengah);
+    splitPane.setDividerLocation(250);
+    JSplitPane mainSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, splitPane, panelKanan);
+    mainSplitPane.setDividerLocation(500);
+    
+    aturPerkDialog.add(mainSplitPane, BorderLayout.CENTER);
+
+    JPanel panelInfoSaldo = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    JLabel labelSaldoPemain = new JLabel("Saldo Anda: Rp" + String.format("%,.0f", pemain.getSaldo()));
+    labelSaldoPemain.setFont(fontNormal.deriveFont(Font.BOLD));
+    panelInfoSaldo.add(labelSaldoPemain);
+    aturPerkDialog.add(panelInfoSaldo, BorderLayout.NORTH); // Atau SOUTH
+
+    // Tombol Tutup Dialog
+    JButton btnTutupDialog = new JButton("Tutup");
+    btnTutupDialog.addActionListener(e -> aturPerkDialog.dispose());
+    JPanel panelTutup = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+    panelTutup.add(btnTutupDialog);
+    aturPerkDialog.add(panelTutup, BorderLayout.SOUTH);
+
+
+    aturPerkDialog.setVisible(true);
+    updatePlayerInfo(); // Update info utama setelah dialog ditutup
+}
+
+// Anda perlu Custom ListCellRenderer untuk JList agar tampilan Perk lebih baik
+class PerkListCellRenderer extends DefaultListCellRenderer {
+    @Override
+    public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+        super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        if (value instanceof Perk) {
+            Perk perk = (Perk) value;
+            setText(String.format("%s (Lv.%d %s)", perk.getNama(), perk.getTingkatKesaktian(), perk.getClass().getSimpleName().replace("Perk","")));
+            // Anda bisa menambahkan ikon atau styling lain di sini
+        }
+        return this;
+    }
+}
+
+
+    public void showBeliPerkScreen() {
+        con.removeAll();
+        setBackgroundImage("TP");
+        con.add(backgroundLabel, Integer.valueOf(0));
+        JLabel title = new JLabel("Toko Perk");
+        title.setFont(fontJudul);
+        title.setForeground(Color.WHITE);
+        title.setBounds(220, 20, 600, 100);
+        con.add(title, Integer.valueOf(2));
+
+        JPanel itemPanel = new JPanel();
+        itemPanel.setLayout(new BoxLayout(itemPanel, BoxLayout.Y_AXIS));
+        itemPanel.setBackground(Color.WHITE);
+
+        for (Perk perk : daftarPerk) {
+            JPanel panel = new JPanel(new BorderLayout());
+            panel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.GRAY));
+            panel.setBackground(Color.WHITE);
+            panel.setPreferredSize(new Dimension(750, 90));
+
+            JPanel infoPanel = new JPanel(new GridLayout(2, 1));
+            infoPanel.setBackground(Color.WHITE);
+            infoPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+            JLabel namaLabel = new JLabel(perk.getNama());
+            namaLabel.setFont(new Font("Arial", Font.BOLD, 18));
+
+            JLabel infoLabel = new JLabel("Efek: " + perk.getEfek() + "    Harga: Rp" + perk.getHarga());
+            infoLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+
+            infoPanel.add(namaLabel);
+            infoPanel.add(infoLabel);
+            JPanel tombolPanel = new JPanel();
+            tombolPanel.setBackground(Color.WHITE);
+            tombolPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+            
+
+        SpinnerModel model = new SpinnerNumberModel(1, 1, 99, 1);
+        JSpinner jumlahSpinner = new JSpinner(model);
+        jumlahSpinner.setPreferredSize(new Dimension(50, 30));
+        tombolPanel.add(jumlahSpinner);
+
+        JButton beli = new JButton("Beli");
+        beli.setFont(new Font("Arial", Font.BOLD, 16));
+        beli.setPreferredSize(new Dimension(120, 50)); 
+        beli.addActionListener(e -> {
+            int jumlahBeli = (int) jumlahSpinner.getValue();
+            double totalHarga = perk.getHarga() * jumlahBeli;
+            if (pemain.getSaldo() >= totalHarga) {
+                pemain.kurangiSaldo(totalHarga);
+                pemain.tambahPerkDimiliki(perk); // Tambah ke player
+                JOptionPane.showMessageDialog(window, "Berhasil membeli: " + jumlahBeli + "x " + perk.getNama());
+                showBeliPerkScreen();
+            } else {
+                JOptionPane.showMessageDialog(window, "Saldo tidak cukup!");
+            }
+        });
+            tombolPanel.add(beli);
+            
+
+            panel.add(infoPanel, BorderLayout.CENTER);
+            panel.add(tombolPanel, BorderLayout.EAST);
+            itemPanel.add(panel);
+        }
+
+        JScrollPane scroll = new JScrollPane(itemPanel);
+        scroll.setBounds(100, 150, 800, 250);
+        con.add(scroll, Integer.valueOf(2));
+
+        JButton kembali = new JButton("Kembali");
+        kembali.setFont(fontNormal);
+        kembali.setBounds(800, 420, 200, 60);
+        kembali.addActionListener(e -> kembaliMenu());
+        con.add(kembali, Integer.valueOf(2));
+
+        JTextArea infoArea = new JTextArea(pemain.tampilan());
+        infoArea.setFont(fontNormal);
+        infoArea.setEditable(false);
+        infoArea.setBackground(Color.BLACK);
+        infoArea.setForeground(Color.WHITE);
+        infoArea.setLineWrap(true);
+        JScrollPane infoScroll = new JScrollPane(infoArea);
+        infoScroll.setBounds(50, 500, 950, 140);
+        con.add(infoScroll, Integer.valueOf(2));
+
+        window.revalidate();
+        window.repaint();
+    }
     public void showBeliItemScreen() {
         con.removeAll();
 
@@ -821,7 +1275,6 @@ private void showManageInventoryDialog() {
                 // Untuk sementara, kita tampilkan pesan saja dan update label secara manual jika ada setter.
 
                 JOptionPane.showMessageDialog(inventoryDialog, "Kendaraan berhasil di-upgrade ke level "+kendaraan.getlevel());
-
                 // Update label (jika kapasitas atau saldo benar-benar berubah)
                 kapasitasLabel.setText("Kapasitas Kendaraan: " + 
                                        pemain.getKendaraan().getInventori().values().stream().mapToInt(Integer::intValue).sum() + 
@@ -840,10 +1293,6 @@ private void showManageInventoryDialog() {
         inventoryDialog.setVisible(true);
     }
     public void pilihLokasi(){
-        if (kendaraan.getInventori().isEmpty()) {
-            JOptionPane.showMessageDialog(window, "Stok kendaraan kosong! Tidak bisa berjualan.", "Info", JOptionPane.INFORMATION_MESSAGE);
-            return;
-        }
         con.removeAll();
         //setBackgroundImage("Peta.jpg"); // Atur background peta
         con.add(backgroundLabel, Integer.valueOf(0));
@@ -858,26 +1307,40 @@ private void showManageInventoryDialog() {
         con.add(btnKembaliBase, Integer.valueOf(1));
 
 
-        JLabel titleLokasi = new JLabel("Pilih Lokasi Berjualan");
+        JLabel titleLokasi = new JLabel("Pilih Lokasi Tujuan");
         titleLokasi.setFont(fontJudul.deriveFont(70f));
         titleLokasi.setForeground(new Color(255, 200, 0));
         titleLokasi.setBounds(0, 80, 1280, 100);
         titleLokasi.setHorizontalAlignment(SwingConstants.CENTER);
         con.add(titleLokasi, Integer.valueOf(1));
+        JLabel titleLokasi1 = new JLabel("Pilih Lokasi Tujuan");
+        titleLokasi1.setFont(fontJudul.deriveFont(70f));
+        titleLokasi1.setForeground(Color.BLACK);
+        titleLokasi1.setBounds(5, 80, 1280, 100);
+        titleLokasi1.setHorizontalAlignment(SwingConstants.CENTER);
+        con.add(titleLokasi1, Integer.valueOf(1));
 
-        JButton kA = new JButton("Kota A");
+
+        JButton kA = new JButton("Kota Malam");
         kA.setFont(fontNormal.deriveFont(Font.BOLD, 26f)); // Font lebih besar
         kA.setBounds(440, 250, 400, 80); // Ukuran lebih besar
         kA.setBackground(new Color(135, 206, 250)); // Warna berbeda
         kA.addActionListener(e -> pindahLokasi(1)); // Memanggil method pindahLokasi Anda
         con.add(kA, Integer.valueOf(1));
 
-        JButton kB = new JButton("Kota B");
+        JButton kB = new JButton("Kota Victoria");
         kB.setFont(fontNormal.deriveFont(Font.BOLD, 26f));
         kB.setBounds(440, 360, 400, 80);
         kB.setBackground(new Color(255, 182, 193)); // Warna berbeda
         kB.addActionListener(e -> pindahLokasi(2)); // Memanggil method pindahLokasi Anda
         con.add(kB, Integer.valueOf(1));
+
+        JButton pasar = new JButton("Lorong dagang");
+        pasar.setFont(fontNormal.deriveFont(Font.BOLD, 26f));
+        pasar.setBounds(440, 470, 400, 80);
+        pasar.setBackground(new Color(255, 228, 181)); // Warna berbeda
+        pasar.addActionListener(e -> pindahLokasi(3)); // Memanggil method pindahLokasi Anda
+        con.add(pasar, Integer.valueOf(1));
         
         // Hapus buttonKembali() dari sini karena sudah ada btnKembaliBase
         // buttonKembali(); 
@@ -893,6 +1356,9 @@ private void showManageInventoryDialog() {
             case 2:   
                 kotaB();
                 break; 
+            case 3:
+                pasar();
+                break;
         }
     }
     public void buttonKembali(){
@@ -905,7 +1371,7 @@ private void showManageInventoryDialog() {
     public void buttonKembaliKota(){
         JButton kembali = new JButton("Kembali");
         kembali.setFont(fontNormal);
-        kembali.setBounds(800, 250, 200, 60);
+        kembali.setBounds(1000, 250, 200, 60);
         kembali.addActionListener(e -> kembaliMenu());
         con.add(kembali, Integer.valueOf(1));
     }
@@ -918,19 +1384,24 @@ private void showManageInventoryDialog() {
     }
 
    public void kotaB(){
-        this.kotaTransaksiSaatIni = "Kota B"; // SET KOTA TRANSAKSI
+        this.kotaTransaksiSaatIni = "Kota Victoria"; // SET KOTA TRANSAKSI
         con.removeAll();
         setBackgroundImage("B");
         con.add(backgroundLabel, Integer.valueOf(0));
         buttonKembaliKota();
 
-        JLabel judulKotaB = new JLabel("Distrik Bisnis Kota B");
-        // ... styling judulKotaB ...
+        JLabel judulKotaB = new JLabel("Distrik Bisnis Kota Victoria");
         judulKotaB.setFont(fontJudul.deriveFont(60f));
         judulKotaB.setForeground(Color.LIGHT_GRAY);
         judulKotaB.setHorizontalAlignment(SwingConstants.CENTER);
         judulKotaB.setBounds(0, 50, 1280, 100);
         con.add(judulKotaB, Integer.valueOf(1));
+        JLabel judulKotaB2 = new JLabel("Distrik Bisnis Kota Victoria");
+        judulKotaB2.setFont(fontJudul.deriveFont(60f));
+        judulKotaB2.setForeground(Color.BLACK);
+        judulKotaB2.setHorizontalAlignment(SwingConstants.CENTER);
+        judulKotaB2.setBounds(5, 50, 1280, 100);
+        con.add(judulKotaB2, Integer.valueOf(1));
 
 
         JButton btnCariPembeliDiKotaB = new JButton("Mulai Berjualan di Sini");
@@ -954,13 +1425,19 @@ private void showManageInventoryDialog() {
             path = "Asset/kotaA.png";
             break;
         case "B":
-            path = "Asset/kotaB.jpeg";
+            path = "Asset/kotaB.png";
             break;
         case "M":
             path = "Asset/Menu.jpeg";
             break;
         case "S":
             path = "Asset/Supplier.png";
+            break;
+        case "TP":
+            path = "Asset/TokoPerk.png";
+            break;
+        case "P":
+            path = "Asset/Pasar.png";
             break;
         default:
             path = "Asset/default.jpg";
@@ -977,13 +1454,34 @@ private void showManageInventoryDialog() {
         JOptionPane.showMessageDialog(window, "Kendaraan Anda kosong! Tidak ada yang bisa dijual.", "Info", JOptionPane.INFORMATION_MESSAGE);
         return; // Tetap di layar kota saat ini
     }
+    totalPembeliSesi = rand.nextInt(10) + 1;
+    pembeliKe = 1;
+    mulaiSesiPembeliBerikut();
+}
 
-    pembeliSaatIni = generatePembeliAcak("Pembeli dari " + this.kotaTransaksiSaatIni); // Lebih deskriptif
+private void mulaiSesiPembeliBerikut() {
+    if (pembeliKe > totalPembeliSesi) {
+        // Semua pembeli sudah selesai, kembali ke kota
+        if ("Kota Malam".equals(kotaTransaksiSaatIni)) kotaA();
+        else if ("Kota Victoria".equals(kotaTransaksiSaatIni)) kotaB();
+        else pilihLokasi();
+        return;
+    }
+    if(!Pembeli.peluangBertemu(pemain.getPerkAktif())){
+        tidakAdaPembeli();
+        pembeliKe++;
+        mulaiSesiPembeliBerikut();
+        return;
+    }
+    pembeliSaatIni = generatePembeliAcak("Pembeli dari " + this.kotaTransaksiSaatIni, pemain.getPerkAktif());
     pembeliSaatIni.resetKesabaran();
 
     List<Barang> barangDiKendaraanList = new ArrayList<>(pemain.getKendaraan().getInventori().keySet());
     if (barangDiKendaraanList.isEmpty()) {
         JOptionPane.showMessageDialog(window, "Aneh, kendaraan kosong padahal sudah dicek.", "Error", JOptionPane.ERROR_MESSAGE);
+        if ("Kota Malam".equals(kotaTransaksiSaatIni)) kotaA();
+        else if ("Kota Victoria".equals(kotaTransaksiSaatIni)) kotaB();
+        else pilihLokasi();
         return;
     }
 
@@ -991,29 +1489,31 @@ private void showManageInventoryDialog() {
 
     if (barangYangDipilihPembeli == null) {
         JOptionPane.showMessageDialog(window, pembeliSaatIni.getNama() + " tidak menemukan barang yang dicarinya dan pergi.");
-        // Tetap di layar kota, tidak perlu JDialog terpisah untuk ini
+        pembeliKe++;
+        mulaiSesiPembeliBerikut();
         return;
     }
 
     int hargaJualBarangOlehPlayer = (int) barangYangDipilihPembeli.getHargaJual();
     this.hargaTawaranAwalPembeli = pembeliSaatIni.tawarHarga(barangYangDipilihPembeli, hargaJualBarangOlehPlayer);
 
-    // TIDAK LAGI MEMANGGIL showBerjualanScreen() (JDialog)
-    // Panggil method baru untuk menampilkan UI negosiasi di `con`
     tampilkanLayarNegosiasiDiCon(this.kotaTransaksiSaatIni);
 }
+    public void tidakAdaPembeli() {
+        JOptionPane.showMessageDialog(window, "Tidak ada pembeli yang datang di sesi ini.");
+    }
 
 // Anda perlu memodifikasi method seperti kotaA(), kotaB() atau pilihLokasi()
 // untuk memanggil mulaiSesiBerjualan()
 // Contoh di kotaA():
  public void kotaA(){
-    this.kotaTransaksiSaatIni = "Kota A";
+    this.kotaTransaksiSaatIni = "Kota Malam";
     con.removeAll();
     setBackgroundImage("A");
     con.add(backgroundLabel, Integer.valueOf(0));
     buttonKembaliKota();
 
-    JLabel judulKotaA = new JLabel("Pasar Rakyat Kota A");
+    JLabel judulKotaA = new JLabel("Kota Malam");
     judulKotaA.setFont(fontJudul.deriveFont(60f));
     judulKotaA.setForeground(Color.ORANGE);
     judulKotaA.setHorizontalAlignment(SwingConstants.CENTER);
@@ -1022,29 +1522,63 @@ private void showManageInventoryDialog() {
 
     JButton btnCariPembeliDiKotaA = new JButton("Mulai Berjualan di Sini");
     btnCariPembeliDiKotaA.setFont(fontNormal.deriveFont(Font.BOLD, 22f));
-    btnCariPembeliDiKotaA.setBounds(490, 250, 300, 70);
+    btnCariPembeliDiKotaA.setBounds(490, 550, 300, 70);
     btnCariPembeliDiKotaA.setBackground(new Color(0, 150, 50));
     btnCariPembeliDiKotaA.setForeground(Color.WHITE);
     btnCariPembeliDiKotaA.addActionListener(e -> {
         mulaiSesiBerjualan(); // Panggil method Anda yang sudah ada
     });
+    btnToko = new JButton("Toko Perk");
+    btnToko.setFont(fontNormal.deriveFont(Font.BOLD, 22f));
+    btnToko.setBounds(50, 250, 200, 60);
+    btnToko.setBackground(new Color(47, 4, 48));
+    btnToko.setForeground(Color.WHITE);
+    btnToko.addActionListener(e -> {
+        showBeliPerkScreen();
+    });
+    con.add(btnToko, Integer.valueOf(1));
     con.add(btnCariPembeliDiKotaA, Integer.valueOf(1));
 
     window.revalidate();
     window.repaint();
 }
+    public void pasar(){
+    con.removeAll();
+    setBackgroundImage("P");
+    con.add(backgroundLabel, Integer.valueOf(0));
+    buttonKembaliKota();
+
+    JLabel judulPasar = new JLabel("Lorong dagang");
+    judulPasar.setFont(fontJudul.deriveFont(60f));
+    judulPasar.setForeground(Color.ORANGE);
+    judulPasar.setHorizontalAlignment(SwingConstants.CENTER);
+    judulPasar.setBounds(0, 50, 1280, 100);
+    con.add(judulPasar, Integer.valueOf(1));
+    JLabel judulPasar1 = new JLabel("Lorong dagang");
+    judulPasar1.setFont(fontJudul.deriveFont(60f));
+    judulPasar1.setForeground(Color.BLACK);
+    judulPasar1.setHorizontalAlignment(SwingConstants.CENTER);
+    judulPasar1.setBounds(5, 50, 1280, 100);
+    con.add(judulPasar1, Integer.valueOf(1));
+
+
+    btnToko = new JButton("Toko Barang");
+    btnToko.setFont(fontNormal.deriveFont(Font.BOLD, 22f));
+    btnToko.setBounds(35, 250, 200, 60);
+    btnToko.setBackground(new Color(47, 4, 48));
+    btnToko.setForeground(Color.WHITE);
+    btnToko.addActionListener(e -> {
+        showBuyBarangScreen();
+    });
+    con.add(btnToko, Integer.valueOf(1));
+
+    window.revalidate();
+    window.repaint();
+}
+
 
 private void tampilkanLayarNegosiasiDiCon(String namaLokasiAsal) {
-    gambarPembeliLabelDiLayar      = new JLabel();
-    kesabaranPembeliLabelDiLayar   = new JLabel();
-    dialogPembeliLabelDiLayar      = new JTextArea();
-    infoBarangDitawarAreaDiLayar   = new JTextArea();
-    inputHargaPlayerDiLayar        = new JFormattedTextField();
-    btnTawarDiLayar                = new JButton();
-    btnJualDiLayar                 = new JButton();
-    btnBatalJualDiLayar            = new JButton();
-    inventarisKendaraanAreaDiLayar = new JTextArea();
-    saldoPemainLabel_ModeJual      = new JLabel();
+    
     con.removeAll();
     //setBackgroundImage("Transaksi.jpeg"); // Atau background lain untuk negosiasi
     con.add(backgroundLabel, Integer.valueOf(0));
@@ -1057,6 +1591,8 @@ private void tampilkanLayarNegosiasiDiCon(String namaLokasiAsal) {
     saldoPemainLabel_ModeJual.setBounds(1000, 20, 250, 30); // Sesuaikan bounds
     saldoPemainLabel_ModeJual.setFont(fontNormal.deriveFont(Font.BOLD, 18f));
     saldoPemainLabel_ModeJual.setForeground(Color.ORANGE);
+    saldoPemainLabel_ModeJual.setBackground(Color.BLACK);
+    saldoPemainLabel_ModeJual.setBorder(BorderFactory.createLineBorder(Color.ORANGE, 2));
     saldoPemainLabel_ModeJual.setHorizontalAlignment(SwingConstants.RIGHT);
     con.add(saldoPemainLabel_ModeJual, Integer.valueOf(1));
 
@@ -1114,16 +1650,16 @@ private void tampilkanLayarNegosiasiDiCon(String namaLokasiAsal) {
     con.add(BorderInfoPembeli, Integer.valueOf(3));
 
     // Dialog Pembeli (menggunakan JTextArea dialogPembeliLabelDiLayar Anda)
-    dialogPembeliLabelDiLayar.setText(pembeliSaatIni.getNama() + ": \"Saya tertarik dengan " + barangYangDipilihPembeli.getNama() + ". Saya tawar Rp" + String.format("%,d", this.hargaTawaranAwalPembeli) + ".\"");
-    dialogPembeliLabelDiLayar.setFont(fontNormal.deriveFont(18f));
-    dialogPembeliLabelDiLayar.setForeground(Color.WHITE);
-    dialogPembeliLabelDiLayar.setBackground(Color.BLACK); // Transparan
-    dialogPembeliLabelDiLayar.setOpaque(true);
-    dialogPembeliLabelDiLayar.setWrapStyleWord(true);
-    dialogPembeliLabelDiLayar.setLineWrap(true);
-    dialogPembeliLabelDiLayar.setEditable(false);
-    dialogPembeliLabelDiLayar.setBorder(BorderFactory.createEmptyBorder(10,10,10,10));
-    JScrollPane scrollDialog = new JScrollPane(dialogPembeliLabelDiLayar);
+    dialogNPC.setText(pembeliSaatIni.getNama() + ": \"Saya tertarik dengan " + barangYangDipilihPembeli.getNama() + ". Saya tawar Rp" + String.format("%,d", this.hargaTawaranAwalPembeli) + ".\"");
+    dialogNPC.setFont(fontNormal.deriveFont(18f));
+    dialogNPC.setForeground(Color.WHITE);
+    dialogNPC.setBackground(Color.BLACK); // Transparan
+    dialogNPC.setOpaque(true);
+    dialogNPC.setWrapStyleWord(true);
+    dialogNPC.setLineWrap(true);
+    dialogNPC.setEditable(false);
+    dialogNPC.setBorder(BorderFactory.createLineBorder(Color.WHITE, 2));
+    JScrollPane scrollDialog = new JScrollPane(dialogNPC);
     scrollDialog.setBounds(630, 100, 330, 90);
     scrollDialog.setOpaque(false); scrollDialog.getViewport().setOpaque(false); scrollDialog.setBorder(null);
     scrollDialog.getViewport().setBackground(new Color(0,0,0,190)); // Background untuk viewport
@@ -1164,7 +1700,7 @@ private void tampilkanLayarNegosiasiDiCon(String namaLokasiAsal) {
     con.add(labelInputHargaCon, Integer.valueOf(1));
 
     // Menggunakan inputHargaPlayerDiLayar Anda
-    inputHargaPlayerDiLayar.setValue((int) barangYangDipilihPembeli.getHargaJual());
+    inputHargaPlayerDiLayar.setValue((int) this.hargaTawaranAwalPembeli);
     inputHargaPlayerDiLayar.setBounds(100, 320, 220, 35);
     inputHargaPlayerDiLayar.setFont(fontNormal.deriveFont(18f));
     inputHargaPlayerDiLayar.setHorizontalAlignment(JTextField.RIGHT);
@@ -1237,26 +1773,26 @@ private void handleTawarBalikKePembeliCon() {
     kesabaranPembeliLabelDiLayar.setText("Kesabaran: " + pembeliSaatIni.getKesabaranSaatIni() + "/" + pembeliSaatIni.getTingkatKesabaranDefault());
 
     if (!pembeliSaatIni.masihSabar()) {
-        dialogPembeliLabelDiLayar.setText(
+        dialogNPC.setText(
         pembeliSaatIni.getNama() + ": \"Sudah cukup! Saya tidak tertarik lagi.\"\n(Kesabaran habis, pergi)"
         );
         nonaktifkanKontrolJualCon("Kesabaran Habis");
         return;
     }
 
-    boolean terimaTawaranPlayer = pembeliSaatIni.putuskanBeli(hargaTawaranPlayer, this.hargaTawaranAwalPembeli);
+    boolean terimaTawaranPlayer = pembeliSaatIni.putuskanBeli(hargaTawaranPlayer, this.hargaTawaranAwalPembeli, this.pemain.getPerkAktif());
 
     if (terimaTawaranPlayer) {
         prosesPenjualanBerhasilCon(hargaTawaranPlayer);
     } else {
         int hargaTawaranBaruPembeli = pembeliSaatIni.tawarHarga(barangYangDipilihPembeli, hargaTawaranPlayer);
         if (hargaTawaranBaruPembeli >= hargaTawaranPlayer && !(pembeliSaatIni instanceof PembeliTajir && Math.random() < 0.15)) { 
-            dialogPembeliLabelDiLayar.setText(
+            dialogNPC.setText(
                 pembeliSaatIni.getNama() + ": \"Hmm, harga Rp" + String.format("%,d", hargaTawaranPlayer) + " masih terlalu tinggi untuk saya.\"\n(Tidak menawar lagi)"
             );
         } else {
             this.hargaTawaranAwalPembeli = hargaTawaranBaruPembeli;
-            dialogPembeliLabelDiLayar.setText(
+            dialogNPC.setText(
                 pembeliSaatIni.getNama() + ": \"Bagaimana kalau Rp" + String.format("%,d", this.hargaTawaranAwalPembeli) + "?\""
             );
         }
@@ -1267,8 +1803,8 @@ private void handleJualDenganHargaInputCon() {
         JOptionPane.showMessageDialog(window, "Masukkan harga jual Anda!", "Input Error", JOptionPane.ERROR_MESSAGE);
         return;
     }
-    int hargaFinalPlayer = (Integer) inputHargaPlayerDiLayar.getValue();
-    boolean keputusanFinalPembeli = pembeliSaatIni.putuskanBeli(hargaFinalPlayer, this.hargaTawaranAwalPembeli);
+    int hargaFinalPlayer = (Integer) this.hargaTawaranAwalPembeli;
+    boolean keputusanFinalPembeli = pembeliSaatIni.putuskanBeli(hargaFinalPlayer, this.hargaTawaranAwalPembeli, this.pemain.getPerkAktif());
 
     if (keputusanFinalPembeli) {
         prosesPenjualanBerhasilCon(hargaFinalPlayer);
@@ -1276,12 +1812,12 @@ private void handleJualDenganHargaInputCon() {
         pembeliSaatIni.kurangiKesabaran();
         kesabaranPembeliLabelDiLayar.setText("Kesabaran: " + pembeliSaatIni.getKesabaranSaatIni() + "/" + pembeliSaatIni.getTingkatKesabaranDefault());
         if (!pembeliSaatIni.masihSabar()) {
-            dialogPembeliLabelDiLayar.setText(
+            dialogNPC.setText(
                 pembeliSaatIni.getNama() + ": \"Saya rasa kita tidak akan sepakat.\"\n(Kesabaran habis, pergi)"
             );
             nonaktifkanKontrolJualCon("Kesabaran Habis");
         } else {
-            dialogPembeliLabelDiLayar.setText(
+            dialogNPC.setText(
                 pembeliSaatIni.getNama() + ": \"Maaf, harga Rp" + String.format("%,d", hargaFinalPlayer) + " masih terlalu tinggi buat saya.\""
             );
         }
@@ -1291,12 +1827,12 @@ private void prosesPenjualanBerhasilCon(int hargaTerjual) {
     pemain.tambahSaldo(hargaTerjual);
     pemain.getKendaraan().kurangiBarang(barangYangDipilihPembeli, 1);
 
-   dialogPembeliLabelDiLayar.setText(
+   dialogNPC.setText(
     pembeliSaatIni.getNama() + ": \"Setuju! Terima kasih banyak.\"\n(Barang terjual seharga Rp" + String.format("%,d", hargaTerjual) + ")");
-    nonaktifkanKontrolJualCon("Transaksi Selesai");
+    
     updateInventarisKendaraanDiLayarJualCon();
     updateSaldoDiLayarJualCon();
-
+    nonaktifkanKontrolJualCon("Transaksi Selesai");
     JOptionPane.showMessageDialog(window,
             "Berhasil menjual " + barangYangDipilihPembeli.getNama() + " kepada " + pembeliSaatIni.getNama() + " seharga Rp" + String.format("%,d", hargaTerjual) + "!",
             "Transaksi Berhasil", JOptionPane.INFORMATION_MESSAGE);
@@ -1309,6 +1845,14 @@ private void nonaktifkanKontrolJualCon(String alasanSelesai) {
     inputHargaPlayerDiLayar.setEnabled(false);
     btnBatalJualDiLayar.setText("Lanjut (" + alasanSelesai.substring(0, Math.min(alasanSelesai.length(), 10))+"..)");
     btnBatalJualDiLayar.setBackground(new Color(0,100,0)); // Warna hijau untuk lanjut
+
+     // Remove all previous listeners
+    for(ActionListener al : btnBatalJualDiLayar.getActionListeners()) btnBatalJualDiLayar.removeActionListener(al);
+    // Tambahkan listener baru untuk lanjut ke pembeli berikutnya
+    btnBatalJualDiLayar.addActionListener(e -> {
+        pembeliKe++;
+        mulaiSesiPembeliBerikut();
+    });
 }
 private void handleAkhiriSesiDenganPembeliCon(boolean dibatalkanOlehPemain, String kotaKembali) {
     if (dibatalkanOlehPemain && pembeliSaatIni != null && barangYangDipilihPembeli != null && btnTawarDiLayar.isEnabled()) {
@@ -1318,15 +1862,15 @@ private void handleAkhiriSesiDenganPembeliCon(boolean dibatalkanOlehPemain, Stri
         if (konfirmasi == JOptionPane.NO_OPTION) {
             return;
         }
-       if(dialogPembeliLabelDiLayar != null) {
-            dialogPembeliLabelDiLayar.setText(
+       if(dialogNPC != null) {
+            dialogNPC.setText(
             pembeliSaatIni.getNama() + ": \"Baiklah kalau begitu...\" (Kecewa dan pergi)"
             );
         }
     }
     // Kembali ke layar kota tempat transaksi terjadi
-    if ("Kota A".equals(kotaKembali)) kotaA();
-    else if ("Kota B".equals(kotaKembali)) kotaB(); // Jika Anda implementasi kotaB
+    if ("Kota Malam".equals(kotaKembali)) kotaA();
+    else if ("Kota Victoria".equals(kotaKembali)) kotaB(); // Jika Anda implementasi kotaB
     else pilihLokasi(); // Fallback
 }
 
@@ -1356,12 +1900,32 @@ private void updateSaldoDiLayarJualCon(){
 
 
 // Method generatePembeliAcak() Anda yang sudah ada
-private Pembeli generatePembeliAcak(String namaTambahan) { // namaTambahan diubah jadi nama
-    String[] daftarNama = {"Nel", "Budi", "Mike", "Dodi", "Brody", "Tzy", "Gilang", "Yuanwu", "Joko", "Mara", "John"};
+private Pembeli generatePembeliAcak(String namaTambahan, List<Perk> perk) { // namaTambahan diubah jadi nama
+    String[] daftarNama = {"Nel", "Budi", "Mike", "Dodi", "Brody", "Bill", "Gilang", "Yuanwu", "Joko", "Mara", "John"};
     String namaAcak = daftarNama[new Random().nextInt(daftarNama.length)] + " " + namaTambahan; // Menggunakan namaTambahan
+    double buff = 0;
     double chance = Math.random();
-    if (chance < 0.25) return new PembeliMiskin(namaAcak); // Peluang disesuaikan
+    if (perk != null) {
+        for (Perk p : perk) {
+            if (p instanceof PerkElegan) {
+                buff += p.getEfek();
+            }
+        }
+        if(buff > 0.5){
+            buff = 0.5; // Batasi buff maksimum
+        }
+    }
+    chance += buff;
+    if (chance < 0.35) return new PembeliMiskin(namaAcak); // Peluang disesuaikan
     else if (chance < 0.75) return new PembeliStandard(namaAcak);
     else return new PembeliTajir(namaAcak);
 }
-}
+    public void save(){
+         boolean sukses = saveFile.simpanProgress(this.pemain, this.kendaraan, this.rumah);
+            if (sukses) {
+                JOptionPane.showMessageDialog(window, "Game berhasil disimpan!", "Simpan Game", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(window, "Gagal menyimpan game.", "Error Simpan", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }

@@ -8,8 +8,8 @@ public class Kendaraan {
     private int kapasitas = 5;
     private int level = 1;
 
-    public Kendaraan(String nama, int kapasitas, int level){
-        this.nama = nama;
+    public Kendaraan(int kapasitas, int level){
+        this.nama = "Retrofitted Gastruck";
         this.kapasitas = kapasitas;
         this.level = level;
     }
@@ -44,9 +44,33 @@ public class Kendaraan {
             inventori.remove(barang);
         }
     }
-
+    public void setNama(){
+        if(this.level == 2){
+            this.nama = "Supercharged Gastruck";
+        } else if(this.level == 3){
+            this.nama = "Mobile Powerhouse";
+        }
+    }
+    public void setNama(String nama){
+        this.nama = nama;
+    }
+    public void setKapasitas(int kapasitas) {
+        this.kapasitas = kapasitas;
+    }
     public int getJumlah(Barang barang) {
         return inventori.getOrDefault(barang, 0);
+    }
+    public void setLevel(int level) {
+        this.level = level;
+        // Setelah level di-set (misalnya dari file save),
+        // update juga nama kendaraan agar konsisten dengan level tersebut,
+        // KECUALI jika Anda ingin nama dari file save (yang mungkin kustom) menimpa ini.
+        // Jika nama dari file save adalah yang utama, maka setNama(String) akan dipanggil setelah ini.
+        // Jika nama harus selalu ikut level, panggil setNamaByLevel() di sini.
+        // Untuk load, biasanya kita set field satu per satu dari file, jadi setNamaByLevel()
+        // mungkin tidak perlu dipanggil di sini jika nama juga di-load dari file.
+        // Namun, jika nama TIDAK disimpan/di-load dari file, maka ini penting:
+        // this.setNamaByLevel();
     }
 
     public Map<Barang, Integer> getInventori() {
@@ -57,6 +81,7 @@ public class Kendaraan {
         if (level < 5) {
             level++;
             kapasitas += 20;
+            setNama();
             System.out.println("Kendaraan berhasil diupgrade ke level " + level);
         } else {
             System.out.println("Kendaraan sudah mencapai level maksimum.");

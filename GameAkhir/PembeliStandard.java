@@ -37,12 +37,23 @@ public class PembeliStandard extends Pembeli {
     }
 
     @Override
-    public boolean putuskanBeli(int hargaFinalDariPlayer, int hargaTawaranTerakhirPembeli) {
+    public boolean putuskanBeli(int hargaFinalDariPlayer, int hargaTawaranTerakhirPembeli, List<Perk> perks) {
+        double buff = 0;
+        if (perks != null) {
+            for (Perk p : perks) {
+                if (p instanceof PerkElegan) {
+                    buff += p.getEfek();
+                }
+            }
+            if(buff > 0.5){
+                buff = 0.5; // Batasi buff maksimum
+            }
+        }
         // Peluang beli bagus jika harga player dekat atau di bawah tawaran terakhirnya.
         if (hargaFinalDariPlayer <= hargaTawaranTerakhirPembeli * 1.10) { // Max 10% di atas tawarannya
-            return random.nextDouble() < 0.85; // 85% peluang beli
+            return random.nextDouble() < 0.85 + buff; // 85% peluang beli
         } else if (hargaFinalDariPlayer <= hargaTawaranTerakhirPembeli * 1.25) { // Max 25% di atas tawarannya
-            return random.nextDouble() < 0.50; // 50% peluang beli
+            return random.nextDouble() < 0.50 + buff; // 50% peluang beli
         }
         return random.nextDouble() < 0.15; // 15% peluang jika harga jauh lebih tinggi
     }
