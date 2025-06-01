@@ -1,15 +1,27 @@
+//Kelompok 10
+//Noval Abimanyu Sufyan Pratama - 245150207111075
+//Rusdiansyah Alief Prasetya - 245150207111073
+//Anindhita Faiza Aulia - 245150201111042
+//Monika Miriwanop Kejok - 245150220111002
+
 package GameAkhir;
-import java.util.*;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class Player implements Interface{
     private String nama;
-    private double saldo = 1000069420;
+    private double saldo = 70000;
     private Kendaraan kendaraan;
     private Rumah rumah;
     private List<Perk> perks;
     private List<Item> items;
     private Map<String, Integer> itemMap = new HashMap<>();
     private List<Perk> semuaPerkDimiliki = new ArrayList<>();
-    private List<Perk> perkAktif = new ArrayList<>();       // Maksimal 2 perk yang aktif untuk berjualan
+    private List<Perk> perkAktif = new ArrayList<>();    
 
     public Player(String nama, double saldo, Kendaraan kendaraan, Rumah rumah, List<Perk> perks, List<Item> items) {
         this.nama = nama;
@@ -26,6 +38,7 @@ public class Player implements Interface{
         this.perks = new ArrayList<>();
         this.itemMap = new HashMap<>();
     }
+    
     public Player(String nama) {
         this.nama = nama;
         this.items = new ArrayList<>();
@@ -51,35 +64,47 @@ public class Player implements Interface{
         }
             perks.add(perk);
     }
+    
     public void jualBarang(){
-
     }
+    
     public void gunakanItem(){
-
     }
+    
     public String getNama(){
         return nama;
     }
+    
     public void setNama(String nama){
         this.nama = nama;
     }
+    
     public void aturHarga(){
         
     }
+    
     public void setSaldo(double saldo) {
         this.saldo = saldo;
     }
+    
     public double getSaldo() {
         return saldo;
     }
+    
     public void setKendaraan(Kendaraan kendaraan) {
         this.kendaraan = kendaraan;
     }
+    
     public void getperks(){
         for (Perk perk : perks) {
             System.out.println(perk.getNama());
         }
     }
+    
+    public List<Perk> getPerkDimiliki() {
+        List<Perk> perkDimiliki = null;
+        return perkDimiliki;
+    }       
     public void tambahSaldo(double jumlah) {
         this.saldo += jumlah;
     }
@@ -89,18 +114,20 @@ public class Player implements Interface{
             this.saldo -= jumlah;
         }
     }
+    
     public Kendaraan getKendaraan() {
         return kendaraan;
     }
 
-    
     public List<Perk> getSemuaPerkDimiliki() {
-        return Collections.unmodifiableList(semuaPerkDimiliki); // Kembalikan versi unmodifiable
+        return Collections.unmodifiableList(semuaPerkDimiliki); 
     }
 
     public List<Perk> getPerkAktif() {
         return Collections.unmodifiableList(perkAktif);
     }
+    
+    private Map<Item, Integer> daftarItemPlayer = new HashMap<>();
 
     public void tambahPerkDimiliki(Perk perkBaru) {
         if (perkBaru != null) {
@@ -113,41 +140,27 @@ public class Player implements Interface{
         }
     }
     
-    public void GunakanItem(){
-        
-    }
-
     public void hapusPerkDimiliki(Perk perk){
         if(perk != null){
             semuaPerkDimiliki.remove(perk);
-            // Juga hapus dari perk aktif jika ada di sana
             perkAktif.remove(perk);
         }
     }
 
-
-    public boolean setPerkAktif(Perk perk, int slot) { // slot 0 atau 1
+    public boolean setPerkAktif(Perk perk, int slot) { 
         if (perk == null || !semuaPerkDimiliki.contains(perk) || slot < 0 || slot > 1) {
-            return false; // Perk tidak dimiliki atau slot tidak valid
+            return false; 
         }
-
-        // Jika slot sudah terisi oleh perk lain, kembalikan perk lama ke daftar dimiliki (jika perlu)
-        // Untuk sekarang, kita asumsikan perk aktif bisa diganti langsung.
-        
-        // Pastikan tidak ada perk yang sama di kedua slot aktif
-        if (perkAktif.size() > slot) { // Jika slot sudah ada isinya
-            if(perkAktif.get(slot) != null && perkAktif.get(slot).equals(perk)) return true; // Sudah aktif di slot itu
-            // Cek apakah perk ini sudah aktif di slot lain
+        if (perkAktif.size() > slot) { 
+            if(perkAktif.get(slot) != null && perkAktif.get(slot).equals(perk)) return true; 
             for(int i=0; i < perkAktif.size(); i++){
                 if(i != slot && perkAktif.get(i) != null && perkAktif.get(i).equals(perk)){
-                    // Perk sudah aktif di slot lain, tidak bisa double
                     System.out.println("Perk " + perk.getNama() + " sudah aktif di slot lain.");
                     return false;
                 }
             }
             perkAktif.set(slot, perk);
-        } else if (perkAktif.size() == slot) { // Jika menambah ke slot berikutnya yang kosong
-             // Cek apakah perk ini sudah aktif di slot lain
+        } else if (perkAktif.size() == slot) { 
             for(Perk pAktif : perkAktif){
                 if(pAktif != null && pAktif.equals(perk)){
                      System.out.println("Perk " + perk.getNama() + " sudah aktif di slot lain.");
@@ -155,18 +168,14 @@ public class Player implements Interface{
                 }
             }
             perkAktif.add(slot, perk);
-        } else { // Slot yang dituju terlalu jauh (misal, coba set slot 1 padahal slot 0 kosong)
+        } else {
             return false;
         }
-        
-        // Pastikan tidak lebih dari 2 perk aktif
+
         while (perkAktif.size() > 2) {
-            perkAktif.remove(perkAktif.size() - 1); // Hapus yang terakhir jika kelebihan
+            perkAktif.remove(perkAktif.size() - 1); 
         }
-        // Hapus null jika ada dari pengisian slot yang tidak berurutan
         perkAktif.removeAll(Collections.singleton(null));
-
-
         System.out.println("Perk " + perk.getNama() + " diaktifkan di slot " + (slot + 1));
         return true;
     }
@@ -176,9 +185,7 @@ public class Player implements Interface{
             Perk dilepas = perkAktif.get(slot);
             if (dilepas != null) {
                 System.out.println("Perk " + dilepas.getNama() + " dilepas dari slot " + (slot+1));
-                perkAktif.set(slot, null); // Kosongkan slot
-                // Atau perkAktif.remove(slot) jika ingin listnya mengecil, tapi lebih baik set null untuk menjaga 2 slot
-                // Kemudian bersihkan null
+                perkAktif.set(slot, null); 
                 perkAktif.removeAll(Collections.singleton(null));
             }
         }
@@ -194,7 +201,7 @@ public class Player implements Interface{
         daftarPerk = daftarPerk.substring(0, daftarPerk.length() - 2); 
     }
 
-    String daftarItem = "Tidak ada";
+    String daftarItem = "";
     if (!itemMap.isEmpty()) {
         daftarItem = "";
         for (Map.Entry<String, Integer> entry : itemMap.entrySet()) {
@@ -221,7 +228,58 @@ public class Player implements Interface{
         "Nama: %s%nSaldo: %.0f%nKendaraan: %s%nPerks: %s%nItems: %s",
         nama, saldo, kendaraan.getNama(), daftarPerkAktif, daftarItem
     );
-    
 
 }
+   
+   public boolean cobaTransaksi() {
+    double peluangBerhasil = 0.5;
+        Iterable<Item> itemAktif = null;
+
+    for (Item item : itemAktif) {
+        String nama = item.getNama().toLowerCase();
+
+        switch (nama) {
+            case "penampilan maksimal":
+                if (Math.random() < item.getBonusEfek()) {
+                    System.out.println("💃 Pembeli langsung setuju beli karena penampilan maksimal!");
+                    return true;
+                }
+                break;
+
+            case "diskon mantap":
+                double bonusDiskon = item.getBonusEfek();
+                System.out.printf("💸 Diskon promo aktif! Keberhasilan meningkat sebesar %.0f%%%n", bonusDiskon * 100);
+                peluangBerhasil += bonusDiskon;
+                break;
+
+            case "ahli tawar":
+                double bonusTawar = item.getBonusEfek();
+                System.out.printf("🧠 Skill negosiasi meningkat sebesar %.0f%%%n", bonusTawar * 100);
+                peluangBerhasil += bonusTawar;
+                break;
+
+            case "hipnotis":
+                if (Math.random() < item.getBonusEfek()) {
+                    System.out.println("🌀 Pembeli terhipnotis dan langsung setuju beli!");
+                    return true;
+                }
+                break;
+
+            case "sentuhan ajaib":
+                double bonusSentuhan = item.getBonusEfek();
+                System.out.printf("✨ Sentuhan Ajaib aktif! Peluang meningkat sebesar %.0f%%%n", bonusSentuhan * 100);
+                peluangBerhasil += bonusSentuhan;
+                break;
+        }
+    }
+
+    if (Math.random() < peluangBerhasil) {
+        System.out.println("✅ Transaksi berhasil!");
+        return true;
+    } else {
+        System.out.println("❌ Transaksi gagal.");
+        return false;
+    }
+}
+
 }
