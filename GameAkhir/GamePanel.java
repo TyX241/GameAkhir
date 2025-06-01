@@ -122,15 +122,47 @@ public class GamePanel {
         judulLabel.setForeground(Color.WHITE);
         judulLabel.setFont(fontJudul);
 
+<<<<<<< Updated upstream
         tombolStartPanel = new JPanel();
         tombolStartPanel.setBounds(520, 400, 200, 100);
         tombolStartPanel.setBackground(Color.BLACK);
+=======
+        tombolLoad = new JButton("LOAD");
+        tombolLoad.setBackground(Color.black);
+        tombolLoad.setForeground(Color.white);
+        tombolLoad.setFont(fontNormal);
+        tombolLoad.setBounds(500, 300, 200, 50);
+        tombolLoad.addActionListener(e -> {
+            Object[] hasilLoad = saveFile.muatProgress(daftarBarang, daftarItem);
+            if (hasilLoad != null) {
+                this.pemain = (Player) hasilLoad[0];
+                this.kendaraan = (Kendaraan) hasilLoad[1];
+                this.rumah = (Rumah) hasilLoad[2];
+                GameScreen();
+                JOptionPane.showMessageDialog(window, "Game berhasil dimuat!", "Load", JOptionPane.INFORMATION_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(window, "Gagal memuat game!", "Load Error", JOptionPane.ERROR_MESSAGE);
+            }
+        });
+        
+>>>>>>> Stashed changes
 
         tombolStart = new JButton("START");
         tombolStart.setBackground(Color.black);
         tombolStart.setForeground(Color.white);
         tombolStart.setFont(fontNormal);
         tombolStart.addActionListener(new TitleScreenHandler());
+<<<<<<< Updated upstream
+=======
+        tombolStart.setBounds(500, 400, 200, 50);
+        con.add(judulLabel2, Integer.valueOf(1));
+        con.add(judulLabel, Integer.valueOf(2));
+        con.add(tombolStart, Integer.valueOf(1));
+        con.add(tombolLoad, Integer.valueOf(1));
+        daftarPerk.add(new PerkElegan("Elegan",1));
+        daftarPerk.add(new PerkActive("Aktif",1));
+        daftarPerk.add(new PerkCharming("Charming",1));
+>>>>>>> Stashed changes
 
         judulPanel.add(judulLabel);
         tombolStartPanel.add(tombolStart);
@@ -442,7 +474,11 @@ private void showBuyBarangScreen() {
         }
 
         JScrollPane scroll = new JScrollPane(itemPanel);
+<<<<<<< Updated upstream
         scroll.setBounds(100, 150, 800, 250);
+=======
+        scroll.setBounds(100, 150, 600, 250);
+>>>>>>> Stashed changes
         con.add(scroll);
 
         JButton kembali = new JButton("Kembali");
@@ -962,6 +998,15 @@ private void showManageInventoryDialog() {
         case "S":
             path = "Asset/Supplier.png";
             break;
+<<<<<<< Updated upstream
+=======
+        case "TP":
+            path = "Asset/TokoPerk.png";
+            break;
+        case "P":
+            path = "Asset/Pasar.png";
+            break;
+>>>>>>> Stashed changes
         default:
             path = "Asset/default.jpg";
     }
