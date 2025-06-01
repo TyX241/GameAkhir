@@ -6,6 +6,10 @@ import java.text.NumberFormat;
 import java.util.*;
 import java.util.List;
 import java.io.InputStream;
+
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.Clip;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.text.NumberFormatter;
@@ -18,9 +22,10 @@ public class GamePanel {
     JLabel kesabaranPembeliLabelDiLayar;
     JTextArea infoBarangDitawarAreaDiLayar;
     JFormattedTextField inputHargaPlayerDiLayar;
-    JButton btnTawarDiLayar, btnJualDiLayar, btnBatalJualDiLayar,btnToko;
+    JButton btnTawarDiLayar, btnJualDiLayar, btnBatalJualDiLayar,btnToko, btnToko2;
     JTextArea inventarisKendaraanAreaDiLayar;
     private JLabel backgroundLabel;
+    private Clip bgmClip;
     private Barang barangYangDipilihPembeli = null;
     private Pembeli pembeliSaatIni = null;
     private String kotaTransaksiSaatIni = null;
@@ -28,17 +33,19 @@ public class GamePanel {
     private int totalPembeliSesi = 0;
     private int pembeliKe = 0;
     private SaveFile saveFile;
+    private boolean efekHipnotisAktif = false;
+    private boolean efekBonusAktif = false;
      // Untuk menampilkan barang di kendaraan
     String nama;
     JLayeredPane layeredPane;
-    Player pemain = new Player("Abi");
+    Player pemain = new Player();
     Rumah rumah = new Rumah();
     Kendaraan kendaraan = new Kendaraan(5, 1);
      // Inisialisasi inventori kendaraan
     ArrayList<Barang> daftarBarang = new ArrayList<>();
     ArrayList<Item> daftarItem = new ArrayList<>();
     ArrayList<Perk> daftarPerk = new ArrayList<>();
-    Peta peta = new Peta();
+    Item item = new Item();
     TokoItem tokoItem = new TokoItem(daftarItem, pemain, rumah, kendaraan);
     Supplier supplier = new Supplier(daftarBarang, rumah, pemain, this);
     TokoPerk tokoPerk = new TokoPerk(daftarPerk,pemain);
@@ -81,7 +88,7 @@ public class GamePanel {
     public GamePanel() {
         fontJudul = testFont("Serif", 90f);
         fontJudulBold = testFont("Serif", 90f);
-        kendaraan.tambahBarang(new Barang("Pensil", 10000, 10000), 5);
+        kendaraan.tambahBarang(new Barang("Pensa", 10000, 10000), 5);
         pemain.setKendaraan(kendaraan);
         pemain.tambahPerkDimiliki(new PerkElegan("Hipnotis", 1));
         window = new JFrame();
@@ -95,17 +102,17 @@ public class GamePanel {
         layeredPane.setLayout(null);
         window.setContentPane(layeredPane);
         con = layeredPane;
-
+        putarBGM("/GameAkhir/Asset/Normal.wav"); // Pastikan path sesuai dengan file BGM Anda
         saveFile = new SaveFile();
         backgroundLabel = new JLabel();
         backgroundLabel.setBounds(0, 0, 1280, 720);
-        ImageIcon icon = new ImageIcon(getClass().getResource("/GameAkhir/Asset/Menu.jpeg")); // Ganti sesuai nama file default kamu
+        ImageIcon icon = new ImageIcon(getClass().getResource("/GameAkhir/Asset/Start.png")); // Ganti sesuai nama file default kamu
         Image img = icon.getImage().getScaledInstance(1280, 720, Image.SCALE_SMOOTH);
         backgroundLabel.setIcon(new ImageIcon(img));
         con.add(backgroundLabel, Integer.valueOf(0));
 
         namaPanel = new JPanel();
-        namaPanel.setBounds(550, 300, 200, 25);
+        namaPanel.setBounds(510, 250, 200, 25);
         namaPanel.setBackground(Color.WHITE);
         JTextField textField = new JTextField(10);
         namaPanel.setVisible(false);
@@ -132,7 +139,7 @@ public class GamePanel {
         tombolLoad.setBackground(Color.black);
         tombolLoad.setForeground(Color.white);
         tombolLoad.setFont(fontNormal);
-        tombolLoad.setBounds(500, 300, 200, 50);
+        tombolLoad.setBounds(510, 400, 200, 50);
         tombolLoad.addActionListener(e -> {
             Object[] hasilLoad = saveFile.muatProgress(daftarBarang, daftarItem);
             if (hasilLoad != null) {
@@ -152,13 +159,11 @@ public class GamePanel {
         tombolStart.setForeground(Color.white);
         tombolStart.setFont(fontNormal);
         tombolStart.addActionListener(new TitleScreenHandler());
-        tombolStart.setBounds(500, 400, 200, 50);
+        tombolStart.setBounds(510, 300, 200, 50);
         con.add(judulLabel2, Integer.valueOf(1));
         con.add(judulLabel, Integer.valueOf(2));
         con.add(tombolStart, Integer.valueOf(1));
         con.add(tombolLoad, Integer.valueOf(1));
-        daftarItem.add(new Item("Hipnotis", "Meningkatkan peluang pembeli setuju", 10000, 1, 0));
-        daftarItem.add(new Item("Promo", "Meningkatkan minat beli", 7500, 1, 0));
         daftarPerk.add(new PerkElegan("Elegan",1));
         daftarPerk.add(new PerkActive("Aktif",1));
         daftarPerk.add(new PerkCharming("Charming",1));
@@ -177,6 +182,21 @@ public class GamePanel {
         
             window.setVisible(true);
         }
+    public void showTitleScreen() {
+        con.removeAll();
+        // Tambahkan ulang komponen awal
+        ImageIcon icon = new ImageIcon(getClass().getResource("/GameAkhir/Asset/Start.png")); // Ganti sesuai nama file default kamu
+        Image img = icon.getImage().getScaledInstance(1280, 720, Image.SCALE_SMOOTH);
+        backgroundLabel.setIcon(new ImageIcon(img));
+        con.add(backgroundLabel, Integer.valueOf(0));
+        con.add(judulLabel2, Integer.valueOf(1));
+        con.add(judulLabel, Integer.valueOf(2));
+        con.add(tombolStart, Integer.valueOf(1));
+        con.add(tombolLoad, Integer.valueOf(1));
+        namaPanel.setVisible(false);
+        window.revalidate();
+        window.repaint();
+    }
 
     public void GameScreen() {
         con.removeAll();
@@ -191,17 +211,8 @@ public class GamePanel {
 
         gambarMC();
 
-        mainTextArea = new JTextArea("Rumah");
-        mainTextArea.setBackground(Color.BLACK);
-        mainTextArea.setForeground(Color.WHITE);
-        mainTextArea.setFont(fontNormal);
-        mainTextArea.setEditable(false);
-        mainTextArea.setFocusable(false);
-        mainTextArea.setLineWrap(true);
-        mainTextPanel.add(mainTextArea);
-
         tombolPilihanPanel = new JPanel();
-        tombolPilihanPanel.setBounds(850, 100, 200, 550);
+        tombolPilihanPanel.setBounds(950, 100, 200, 550);
         tombolPilihanPanel.setBackground(Color.BLACK);
         tombolPilihanPanel.setLayout(new GridLayout(5, 1));
         con.add(tombolPilihanPanel, Integer.valueOf(2));
@@ -221,7 +232,7 @@ public class GamePanel {
         }
 
         panelPemain = new JPanel();
-        panelPemain.setBounds(100, 400, 600, 250);
+        panelPemain.setBounds(100, 500, 600, 150);
         panelPemain.setBackground(Color.BLUE);
         panelPemain.setLayout(new BorderLayout());
         con.add(panelPemain, Integer.valueOf(2));
@@ -275,6 +286,7 @@ public class GamePanel {
     }
 
 private void showBuyBarangScreen() {
+    putarBGM("/GameAkhir/Asset/Shop.wav"); // Pastikan path sesuai dengan file BGM Anda
     con.removeAll();
     gambarPenjual = new JLabel();
     gambarPenjual.setHorizontalAlignment(SwingConstants.CENTER);
@@ -385,7 +397,7 @@ private void showBuyBarangScreen() {
     JButton kembali = new JButton("Kembali");
     kembali.setFont(fontNormal);
     kembali.setBounds(800, 420, 200, 60);
-    kembali.addActionListener(e -> kembaliMenu());
+    kembali.addActionListener(e -> kembalidariTokoB());
     con.add(kembali, Integer.valueOf(2));
 
     JTextArea infoArea = new JTextArea(pemain.tampilan());
@@ -400,6 +412,23 @@ private void showBuyBarangScreen() {
 
     window.revalidate();
     window.repaint();
+}
+
+    private void putarBGM(String path) {
+    try {
+        // Stop dan close BGM lama jika ada
+        if (bgmClip != null && bgmClip.isRunning()) {
+            bgmClip.stop();
+            bgmClip.close();
+        }
+        AudioInputStream audioIn = AudioSystem.getAudioInputStream(getClass().getResource(path));
+        bgmClip = AudioSystem.getClip();
+        bgmClip.open(audioIn);
+        bgmClip.loop(Clip.LOOP_CONTINUOUSLY);
+        bgmClip.start();
+    } catch (Exception e) {
+        System.err.println("Gagal memutar BGM: " + e.getMessage());
+    }
 }
     public void updatePenjual(int jumBarang, String path){
         if(jumBarang > 10){
@@ -461,7 +490,7 @@ private void showBuyBarangScreen() {
 
     public void homeChoice() {
         position = "rumah";
-        pil1.setText("Beli Barang");
+        pil1.setText("Title Screen");
         pil2.setText("Save Game");
         pil3.setText("Atur Perks");
         pil4.setText("Atur Stok");
@@ -471,8 +500,7 @@ private void showBuyBarangScreen() {
     private void handleMenu(int pilihan) {
         switch (pilihan) {
             case 1:
-                showBuyBarangScreen();
-                updatePlayerInfo();
+                showTitleScreen();
                 break;
             case 2:
                 save();
@@ -753,6 +781,21 @@ class PerkListCellRenderer extends DefaultListCellRenderer {
         title.setBounds(220, 20, 600, 100);
         con.add(title, Integer.valueOf(2));
 
+        gambarPenjual = new JLabel();
+        gambarPenjual.setHorizontalAlignment(SwingConstants.CENTER);
+        String pathPenjual = "Asset/Trader.png";
+        gambarPenjual.setBounds(580, 0, 840, 840);
+        try {
+            ImageIcon iconPenjual = new ImageIcon(getClass().getResource("/GameAkhir/" + pathPenjual));
+            Image imgPenjual = iconPenjual.getImage().getScaledInstance(gambarPenjual.getWidth(), gambarPenjual.getHeight(), Image.SCALE_SMOOTH);
+            gambarPenjual.setIcon(new ImageIcon(imgPenjual));
+            gambarPenjual.setText("");
+        } catch (Exception ex) {
+            gambarPenjual.setIcon(null);
+            gambarPenjual.setText("Gambar tidak ditemukan");
+        }
+        con.add(gambarPenjual, Integer.valueOf(1));
+
         JPanel itemPanel = new JPanel();
         itemPanel.setLayout(new BoxLayout(itemPanel, BoxLayout.Y_AXIS));
         itemPanel.setBackground(Color.WHITE);
@@ -807,15 +850,15 @@ class PerkListCellRenderer extends DefaultListCellRenderer {
             panel.add(tombolPanel, BorderLayout.EAST);
             itemPanel.add(panel);
         }
-
+        itemPanel.setPreferredSize(new Dimension(600, daftarPerk.size() * 100));
         JScrollPane scroll = new JScrollPane(itemPanel);
-        scroll.setBounds(100, 150, 800, 250);
+        scroll.setBounds(100, 150, 600, 250);
         con.add(scroll, Integer.valueOf(2));
 
         JButton kembali = new JButton("Kembali");
         kembali.setFont(fontNormal);
         kembali.setBounds(800, 420, 200, 60);
-        kembali.addActionListener(e -> kembaliMenu());
+        kembali.addActionListener(e -> kembali());
         con.add(kembali, Integer.valueOf(2));
 
         JTextArea infoArea = new JTextArea(pemain.tampilan());
@@ -833,12 +876,27 @@ class PerkListCellRenderer extends DefaultListCellRenderer {
     }
     public void showBeliItemScreen() {
         con.removeAll();
-
+        gambarPenjual = new JLabel();
+        gambarPenjual.setHorizontalAlignment(SwingConstants.CENTER);
+        String pathPenjual = "Asset/ItemP.png";
+        gambarPenjual.setBounds(580, 0, 1040, 1040);
+        try {
+            ImageIcon iconPenjual = new ImageIcon(getClass().getResource("/GameAkhir/" + pathPenjual));
+            Image imgPenjual = iconPenjual.getImage().getScaledInstance(gambarPenjual.getWidth(), gambarPenjual.getHeight(), Image.SCALE_SMOOTH);
+            gambarPenjual.setIcon(new ImageIcon(imgPenjual));
+            gambarPenjual.setText("");
+        } catch (Exception ex) {
+            gambarPenjual.setIcon(null);
+            gambarPenjual.setText("Gambar tidak ditemukan");
+        }
+        con.add(gambarPenjual, Integer.valueOf(1));
+        setBackgroundImage("TI");
+        con.add(backgroundLabel, Integer.valueOf(0));
         JLabel title = new JLabel("Toko Item");
         title.setFont(fontJudul);
         title.setForeground(Color.WHITE);
         title.setBounds(220, 20, 600, 100);
-        con.add(title);
+        con.add(title, Integer.valueOf(2));
 
         JPanel itemPanel = new JPanel();
         itemPanel.setLayout(new BoxLayout(itemPanel, BoxLayout.Y_AXIS));
@@ -848,7 +906,7 @@ class PerkListCellRenderer extends DefaultListCellRenderer {
             JPanel panel = new JPanel(new BorderLayout());
             panel.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, Color.GRAY));
             panel.setBackground(Color.WHITE);
-            panel.setPreferredSize(new Dimension(750, 90));
+            panel.setPreferredSize(new Dimension(450, 90));
 
             JPanel infoPanel = new JPanel(new GridLayout(2, 1));
             infoPanel.setBackground(Color.WHITE);
@@ -896,14 +954,14 @@ class PerkListCellRenderer extends DefaultListCellRenderer {
         }
 
         JScrollPane scroll = new JScrollPane(itemPanel);
-        scroll.setBounds(100, 150, 800, 250);
-        con.add(scroll);
+        scroll.setBounds(100, 150, 600, 250);
+        con.add(scroll, Integer.valueOf(2));
 
         JButton kembali = new JButton("Kembali");
         kembali.setFont(fontNormal);
         kembali.setBounds(800, 420, 200, 60);
-        kembali.addActionListener(e -> kembali());
-        con.add(kembali);
+        kembali.addActionListener(e -> kembaliMenu());
+        con.add(kembali, Integer.valueOf(2));
 
         JTextArea infoArea = new JTextArea(pemain.tampilan());
         infoArea.setFont(fontNormal);
@@ -913,7 +971,7 @@ class PerkListCellRenderer extends DefaultListCellRenderer {
         infoArea.setLineWrap(true);
         JScrollPane infoScroll = new JScrollPane(infoArea);
         infoScroll.setBounds(50, 500, 950, 140);
-        con.add(infoScroll);
+        con.add(infoScroll, Integer.valueOf(2));
 
         window.revalidate();
         window.repaint();
@@ -1379,6 +1437,12 @@ private void showManageInventoryDialog() {
         con.removeAll();
         pilihLokasi();
     }
+
+    public void kembalidariTokoB(){
+        con.removeAll();
+        putarBGM("GameAkhir/Asset/Normal.wav");
+        pilihLokasi();
+    }
     public void AturBuff(){
 
     }
@@ -1439,6 +1503,9 @@ private void showManageInventoryDialog() {
         case "P":
             path = "Asset/Pasar.png";
             break;
+        case "TI":
+            path = "Asset/TokoItem.png";
+            break;
         default:
             path = "Asset/default.jpg";
     }
@@ -1484,8 +1551,19 @@ private void mulaiSesiPembeliBerikut() {
         else pilihLokasi();
         return;
     }
+    List<Barang> preferensiPembeli = new ArrayList<>(supplier.getDaftarBarang());
+    Barang barangPreferensi = pembeliSaatIni.pilihBarang(preferensiPembeli);
 
-    barangYangDipilihPembeli = pembeliSaatIni.pilihBarang(barangDiKendaraanList);
+    barangYangDipilihPembeli = null;
+    if (barangPreferensi != null) {
+        // Cek apakah barang preferensi ada di kendaraan player
+        for (Barang b : pemain.getKendaraan().getInventori().keySet()) {
+            if (b.getNama().equals(barangPreferensi.getNama())) {
+                barangYangDipilihPembeli = b;
+                break;
+            }
+        }
+    }
 
     if (barangYangDipilihPembeli == null) {
         JOptionPane.showMessageDialog(window, pembeliSaatIni.getNama() + " tidak menemukan barang yang dicarinya dan pergi.");
@@ -1572,8 +1650,74 @@ private void mulaiSesiPembeliBerikut() {
     });
     con.add(btnToko, Integer.valueOf(1));
 
+    btnToko2 = new JButton("Toko Item");
+    btnToko2.setFont(fontNormal.deriveFont(Font.BOLD, 22f));
+    btnToko2.setBounds(35, 350, 200, 60);
+    btnToko2.setBackground(new Color(47, 4, 48));
+    btnToko2.setForeground(Color.WHITE);
+    btnToko2.addActionListener(e -> {
+        showBeliItemScreen();
+    });
+    con.add(btnToko2, Integer.valueOf(1));
+
     window.revalidate();
     window.repaint();
+}
+    private void memilihItem() {
+    // Ambil daftar item yang dimiliki pemain
+    List<String> itemTersedia = new ArrayList<>();
+    for (Map.Entry<String, Integer> entry : pemain.getItemMap().entrySet()) {
+        if (entry.getValue() > 0) {
+            itemTersedia.add(entry.getKey() + " x" + entry.getValue());
+        }
+    }
+    if (itemTersedia.isEmpty()) {
+        JOptionPane.showMessageDialog(window, "Kamu tidak punya item yang bisa digunakan.", "Info", JOptionPane.INFORMATION_MESSAGE);
+        return;
+    }
+
+    // Pilih item
+    String itemDipilih = (String) JOptionPane.showInputDialog(
+        window,
+        "Pilih item yang ingin digunakan:",
+        "Gunakan Item",
+        JOptionPane.PLAIN_MESSAGE,
+        null,
+        itemTersedia.toArray(),
+        itemTersedia.get(0)
+    );
+
+    if (itemDipilih == null) return; // Batal
+
+    // Ambil nama item saja
+    String namaItem = itemDipilih.split(" x")[0];
+    Item item = null;
+    for (Item it : daftarItem) {
+        if (it.getNama().equals(namaItem)) {
+            item = it;
+            break;
+        }
+    }
+    if (item == null) {
+        JOptionPane.showMessageDialog(window, "Item tidak ditemukan.", "Error", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+
+    // Terapkan efek item (contoh: efek = "Hipnotis", "bonus", dst)
+    if ("Hipnotis".equalsIgnoreCase(item.getEfek())) {
+        // Misal: menambah peluang pembeli menerima tawaran
+        JOptionPane.showMessageDialog(window, "Efek Hipnotis aktif! Peluang pembeli menerima tawaran meningkat.");
+        // Simpan status efek aktif, misal di field boolean
+        efekHipnotisAktif = true;
+    } else if ("bonus".equalsIgnoreCase(item.getEfek())) {
+        JOptionPane.showMessageDialog(window, "Bonus aktif! Harga jual +10%.");
+        efekBonusAktif = true;
+    }
+    // Tambahkan efek lain sesuai kebutuhan
+
+    // Kurangi jumlah item
+    pemain.tambahItem(item, -1);
+    updateInventarisKendaraanDiLayarJualCon();
 }
 
 
@@ -1737,6 +1881,14 @@ private void tampilkanLayarNegosiasiDiCon(String namaLokasiAsal) {
     for(ActionListener al : btnBatalJualDiLayar.getActionListeners()) btnBatalJualDiLayar.removeActionListener(al);
     btnBatalJualDiLayar.addActionListener(e -> handleAkhiriSesiDenganPembeliCon(true, namaLokasiAsal));
     con.add(btnBatalJualDiLayar, Integer.valueOf(1));
+
+    JButton btnGunakanItem = new JButton("Gunakan Item");
+    btnGunakanItem.setFont(fontNormal.deriveFont(Font.BOLD, 16f));
+    btnGunakanItem.setBounds(100, 75, 220, 45);
+    btnGunakanItem.setBackground(new Color(75, 130, 180));
+    btnGunakanItem.setForeground(Color.WHITE);
+    btnGunakanItem.addActionListener(e -> memilihItem());
+    con.add(btnGunakanItem, Integer.valueOf(1));
     
     // Inventaris Kendaraan
     JLabel labelInvKendaraan = new JLabel("Stok Kendaraan Anda:");
@@ -1768,7 +1920,12 @@ private void handleTawarBalikKePembeliCon() {
         JOptionPane.showMessageDialog(window, "Masukkan harga tawaran Anda!", "Input Error", JOptionPane.ERROR_MESSAGE);
         return;
     }
-    int hargaTawaranPlayer = (Integer) inputHargaPlayerDiLayar.getValue();
+    int hargaTawaranPlayer = 0;
+        hargaTawaranPlayer = (Integer) inputHargaPlayerDiLayar.getValue();
+        if( hargaTawaranPlayer < 0) {
+            JOptionPane.showMessageDialog(window, "Harga tawaran tidak boleh negatif!", "Input Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
     pembeliSaatIni.kurangiKesabaran();
     kesabaranPembeliLabelDiLayar.setText("Kesabaran: " + pembeliSaatIni.getKesabaranSaatIni() + "/" + pembeliSaatIni.getTingkatKesabaranDefault());
 
@@ -1780,9 +1937,13 @@ private void handleTawarBalikKePembeliCon() {
         return;
     }
 
-    boolean terimaTawaranPlayer = pembeliSaatIni.putuskanBeli(hargaTawaranPlayer, this.hargaTawaranAwalPembeli, this.pemain.getPerkAktif());
-
+    boolean terimaTawaranPlayer = false;
+    double persenHipnotis = hipnotisDigunakan();
+    if(terimaTawaranPlayer == false){
+        terimaTawaranPlayer = pembeliSaatIni.putuskanBeli(hargaTawaranPlayer, this.hargaTawaranAwalPembeli, this.pemain.getPerkAktif(), persenHipnotis);
+    }
     if (terimaTawaranPlayer) {
+        hargaTawaranPlayer = bonusdigunakan(hargaTawaranPlayer);
         prosesPenjualanBerhasilCon(hargaTawaranPlayer);
     } else {
         int hargaTawaranBaruPembeli = pembeliSaatIni.tawarHarga(barangYangDipilihPembeli, hargaTawaranPlayer);
@@ -1798,15 +1959,25 @@ private void handleTawarBalikKePembeliCon() {
         }
     }
 }
+private double hipnotisDigunakan(){
+    double status = item.efekHipnotis(efekHipnotisAktif);
+    efekHipnotisAktif = false;
+    return status;
+}
 private void handleJualDenganHargaInputCon() {
     if (inputHargaPlayerDiLayar.getValue() == null) {
         JOptionPane.showMessageDialog(window, "Masukkan harga jual Anda!", "Input Error", JOptionPane.ERROR_MESSAGE);
         return;
     }
     int hargaFinalPlayer = (Integer) this.hargaTawaranAwalPembeli;
-    boolean keputusanFinalPembeli = pembeliSaatIni.putuskanBeli(hargaFinalPlayer, this.hargaTawaranAwalPembeli, this.pemain.getPerkAktif());
 
+    boolean keputusanFinalPembeli = false;
+    double persenHipnotis = hipnotisDigunakan();
+    if(keputusanFinalPembeli == false){ 
+        keputusanFinalPembeli = pembeliSaatIni.putuskanBeli(hargaFinalPlayer, this.hargaTawaranAwalPembeli, this.pemain.getPerkAktif(), persenHipnotis);
+    }
     if (keputusanFinalPembeli) {
+        hargaFinalPlayer = bonusdigunakan(hargaFinalPlayer);
         prosesPenjualanBerhasilCon(hargaFinalPlayer);
     } else {
         pembeliSaatIni.kurangiKesabaran();
@@ -1823,6 +1994,14 @@ private void handleJualDenganHargaInputCon() {
         }
     }
 }
+private int bonusdigunakan(int hargaTawaranPlayer) {
+    int hargaJual = hargaTawaranPlayer;
+    if (efekBonusAktif) {
+    hargaJual = (int) (hargaTawaranPlayer * 1.1);
+    efekBonusAktif = false;
+    }
+    return hargaJual;
+}
 private void prosesPenjualanBerhasilCon(int hargaTerjual) {
     pemain.tambahSaldo(hargaTerjual);
     pemain.getKendaraan().kurangiBarang(barangYangDipilihPembeli, 1);
@@ -1836,6 +2015,8 @@ private void prosesPenjualanBerhasilCon(int hargaTerjual) {
     JOptionPane.showMessageDialog(window,
             "Berhasil menjual " + barangYangDipilihPembeli.getNama() + " kepada " + pembeliSaatIni.getNama() + " seharga Rp" + String.format("%,d", hargaTerjual) + "!",
             "Transaksi Berhasil", JOptionPane.INFORMATION_MESSAGE);
+    
+    perkDrop();
     // Tombol btnBatalJualDiLayar sekarang berfungsi sebagai tombol "Lanjut"
 }
 
@@ -1901,7 +2082,7 @@ private void updateSaldoDiLayarJualCon(){
 
 // Method generatePembeliAcak() Anda yang sudah ada
 private Pembeli generatePembeliAcak(String namaTambahan, List<Perk> perk) { // namaTambahan diubah jadi nama
-    String[] daftarNama = {"Nel", "Budi", "Mike", "Dodi", "Brody", "Bill", "Gilang", "Yuanwu", "Joko", "Mara", "John"};
+    String[] daftarNama = {"Nel", "Budi", "Mike", "Dodi", "Brody", "Bill", "Wowo", "Yuanwu", "Cal", "Nick", "John"};
     String namaAcak = daftarNama[new Random().nextInt(daftarNama.length)] + " " + namaTambahan; // Menggunakan namaTambahan
     double buff = 0;
     double chance = Math.random();
@@ -1919,6 +2100,14 @@ private Pembeli generatePembeliAcak(String namaTambahan, List<Perk> perk) { // n
     if (chance < 0.35) return new PembeliMiskin(namaAcak); // Peluang disesuaikan
     else if (chance < 0.75) return new PembeliStandard(namaAcak);
     else return new PembeliTajir(namaAcak);
+}   
+    private void perkDrop() {
+    int chance = rand.nextInt(20) + 1; // 1-10
+    if (chance == 1 && !daftarPerk.isEmpty()) { // 10% peluang dapat perk
+        Perk perkBaru = daftarPerk.get(rand.nextInt(daftarPerk.size()));
+            pemain.tambahPerkDimiliki(perkBaru);
+            JOptionPane.showMessageDialog(window, "Selamat! Kamu mendapatkan perk baru: " + perkBaru.getNama());
+    }
 }
     public void save(){
          boolean sukses = saveFile.simpanProgress(this.pemain, this.kendaraan, this.rumah);

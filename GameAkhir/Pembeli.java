@@ -29,7 +29,7 @@ public abstract class Pembeli {
      * @param hargaTawaranTerakhirPembeli Tawaran terakhir dari pembeli sendiri (sebagai referensi).
      * @return true jika pembeli setuju membeli, false jika tidak.
      */
-    public abstract boolean putuskanBeli(int hargaFinalDariPlayer, int hargaTawaranTerakhirPembeli, List<Perk> perks);
+    public abstract boolean putuskanBeli(int hargaFinalDariPlayer, int hargaTawaranTerakhirPembeli, List<Perk> perks, double hipno);
 
     /**
      * Pembeli memilih satu barang dari daftar barang yang tersedia di kendaraan pemain.

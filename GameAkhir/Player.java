@@ -104,25 +104,19 @@ public class Player implements Interface{
 
     public void tambahPerkDimiliki(Perk perkBaru) {
         if (perkBaru != null) {
-            // Cek apakah sudah punya perk dengan nama yang sama (mungkin beda tipe atau level)
-            // Untuk simplicity, kita izinkan duplikat nama jika tipenya beda, tapi idealnya nama unik.
-            // Atau, jika nama sama dan tipe sama, mungkin ini adalah hasil upgrade.
             boolean sudahAdaDenganNamaSama = false;
             for(Perk p : semuaPerkDimiliki) {
                 if (p.getNama().equals(perkBaru.getNama()) && p.getClass().equals(perkBaru.getClass())) {
-                    // Jika sudah ada perk dengan nama dan tipe yang sama, mungkin ganti dengan yang baru (jika level lebih tinggi)
-                    // Atau, ini bisa jadi logika yang lebih kompleks. Untuk sekarang, kita replace saja.
-                    // Ini perlu dipikirkan: apakah pemain bisa punya >1 perk "Elegan Awal"?
-                    // Jika tidak, maka logika ini perlu disesuaikan.
-                    // Untuk sekarang, kita anggap bisa ada beberapa instance perk berbeda.
-                    // Jika nama adalah ID unik, maka harus ada pengecekan lebih lanjut.
-                    // Jika Anda ingin nama unik, maka jangan tambahkan jika sudah ada nama yang sama.
                 }
             }
             this.semuaPerkDimiliki.add(perkBaru);
         }
     }
     
+    public void GunakanItem(){
+        
+    }
+
     public void hapusPerkDimiliki(Perk perk){
         if(perk != null){
             semuaPerkDimiliki.remove(perk);

@@ -21,7 +21,9 @@ public class Supplier {
         daftarBarang.add(new Barang("Crystaline",5000, 5200));
         daftarBarang.add(new Barang("D32 Steel",6000, 6200));
     }
-    
+    public List<Barang> getDaftarBarang() {
+        return this.daftarBarang;
+    }
     public void beliBarang(){
         Scanner in = new Scanner(System.in);
         System.out.println("Daftar Barang:");

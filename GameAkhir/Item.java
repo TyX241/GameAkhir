@@ -8,6 +8,8 @@ public class Item {
     private int jumlah[] = new int[10];
     private int perluLevel;
 
+    public Item(){
+    }
     public Item(String nama, String efek, double harga, int durasi) {
         this.nama = nama;
         this.efek = efek;
@@ -63,6 +65,13 @@ public class Item {
 
     public void aktifkan(){
         
+    }
+    public double efekHipnotis(boolean efekHipnotis){
+        if(efekHipnotis){
+            return 0.1;
+        } else {
+            return 0;
+        }
     }
     
     @Override
